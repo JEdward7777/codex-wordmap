@@ -17,6 +17,24 @@ function extractLineFromNotebook(notebookDocument: vscode.NotebookDocument, vers
     return undefined;
 }
 
+function showLineInWebview( context: vscode.ExtensionContext, line: string ) {
+    const webviewPanel = vscode.window.createWebviewPanel(
+        'codexWordMap',
+        'Codex WordMap',
+        vscode.ViewColumn.Beside,
+        {
+            enableScripts: true
+        }
+    );
+    webviewPanel.webview.html = `
+        <html>
+            <body>
+                <p>${line}</p>
+            </body>
+        </html>
+    `;
+}
+
 class WordLensProvider implements vscode.CodeLensProvider {
     private _onDidChangeCodeLenses: vscode.EventEmitter<void> = new vscode.EventEmitter();
     readonly onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLenses.event;
@@ -74,9 +92,7 @@ export const registerCodeLenses = (context: vscode.ExtensionContext) => {
                 if (notebookDocument) {
                     const foundLine = extractLineFromNotebook(notebookDocument, verseRef);
                     if( foundLine ){
-                        const edit = new vscode.WorkspaceEdit();
-                        edit.insert(foundLine.cell.document.uri, new vscode.Position(foundLine.line_number, foundLine.line.length), " potato");
-                        vscode.workspace.applyEdit(edit);
+                        showLineInWebview( context, foundLine.line );
                     }
                 }
             }
