@@ -2,6 +2,21 @@
 import * as vscode from "vscode";
 import { extractVerseRefFromLine } from "./utils/verseRefUtils";
 
+function extractLineFromNotebook(notebookDocument: vscode.NotebookDocument, verseRef: string): {cell: vscode.NotebookCell, line_number: number, line: string}|undefined {
+    //spin through the cells in the document and find the line that starts with verseRef.
+    //This document is a notebook.
+    for( const [cell_index, cell] of notebookDocument.getCells().entries() ) {
+        if (cell.kind === vscode.NotebookCellKind.Code) {
+            for (const [line_number, line] of cell.document.getText().split("\n").entries()) {
+                if (line.startsWith(verseRef)) {
+                    return {cell, line_number, line};
+                }
+            }
+        }
+    }
+    return undefined;
+}
+
 class WordLensProvider implements vscode.CodeLensProvider {
     private _onDidChangeCodeLenses: vscode.EventEmitter<void> = new vscode.EventEmitter();
     readonly onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLenses.event;
@@ -57,24 +72,11 @@ export const registerCodeLenses = (context: vscode.ExtensionContext) => {
                 const uriObj = vscode.Uri.parse( uri );
                 const notebookDocument = vscode.workspace.notebookDocuments.find(doc => doc.uri.fsPath === uriObj.fsPath);
                 if (notebookDocument) {
-                    //spin through the cells in the document and find the line that starts with verseRef.
-                    //This document is a notebook.
-                    for( const [cell_index, cell] of notebookDocument.getCells().entries() ) {
-                        if (cell.kind === vscode.NotebookCellKind.Code) {
-                            for (const [line_number, line] of cell.document.getText().split("\n").entries()) {
-                                if (line.startsWith(verseRef)) {
-                                    //vscode.window.showInformationMessage(line);
-
-                                    //Create an insertion edit for the end of this line to add the word potato.
-                                    const edit = new vscode.WorkspaceEdit();
-                                    edit.insert(cell.document.uri, new vscode.Position(line_number, line.length), " potato");
-
-                                    vscode.workspace.applyEdit(edit);
-
-                                    break;
-                                }
-                            }
-                        }
+                    const foundLine = extractLineFromNotebook(notebookDocument, verseRef);
+                    if( foundLine ){
+                        const edit = new vscode.WorkspaceEdit();
+                        edit.insert(foundLine.cell.document.uri, new vscode.Position(foundLine.line_number, foundLine.line.length), " potato");
+                        vscode.workspace.applyEdit(edit);
                     }
                 }
             }
