@@ -1,6 +1,7 @@
 
 import * as vscode from "vscode";
 import { extractVerseRefFromLine } from "./utils/verseRefUtils";
+import { showWebview } from "./wordAlignWebview";
 
 function extractLineFromNotebook(notebookDocument: vscode.NotebookDocument, verseRef: string): {cell: vscode.NotebookCell, line_number: number, line: string}|undefined {
     //spin through the cells in the document and find the line that starts with verseRef.
@@ -18,21 +19,7 @@ function extractLineFromNotebook(notebookDocument: vscode.NotebookDocument, vers
 }
 
 function showLineInWebview( context: vscode.ExtensionContext, line: string ) {
-    const webviewPanel = vscode.window.createWebviewPanel(
-        'codexWordMap',
-        'Codex WordMap',
-        vscode.ViewColumn.Beside,
-        {
-            enableScripts: true
-        }
-    );
-    webviewPanel.webview.html = `
-        <html>
-            <body>
-                <p>${line}</p>
-            </body>
-        </html>
-    `;
+    showWebview( context, line );
 }
 
 class WordLensProvider implements vscode.CodeLensProvider {
