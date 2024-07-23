@@ -18,10 +18,6 @@ function extractLineFromNotebook(notebookDocument: vscode.NotebookDocument, vers
     return undefined;
 }
 
-function showLineInWebview( context: vscode.ExtensionContext, line: string ) {
-    showWebview( context, line );
-}
-
 class WordLensProvider implements vscode.CodeLensProvider {
     private _onDidChangeCodeLenses: vscode.EventEmitter<void> = new vscode.EventEmitter();
     readonly onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLenses.event;
@@ -79,7 +75,7 @@ export const registerCodeLenses = (context: vscode.ExtensionContext) => {
                 if (notebookDocument) {
                     const foundLine = extractLineFromNotebook(notebookDocument, verseRef);
                     if( foundLine ){
-                        showLineInWebview( context, foundLine.line );
+                        showWebview( context, foundLine.line );
                     }
                 }
             }
