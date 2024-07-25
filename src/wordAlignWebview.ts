@@ -1,19 +1,26 @@
 import * as vscode from 'vscode';
+import { TSourceTargetAlignment, TWord } from './usfmStuff/utils';
 
-export async function showWebview( context: vscode.ExtensionContext, line: string ) {
+export function showWordAlignWebview( context: vscode.ExtensionContext, alignmentInfo: {wordBank: TWord[], alignments: TSourceTargetAlignment[], reference: string} ) : Promise<TSourceTargetAlignment[] | undefined> {
 
-    const wordAlignWebview = new WordAlignWebview( context, line );
+    const wordAlignWebview = new WordAlignWebview( context, alignmentInfo );
 
-    await wordAlignWebview.show();
+    return wordAlignWebview.show();
 };
 
 
 class WordAlignWebview{
-    constructor( private _context: vscode.ExtensionContext, private line: string ) {
-    }
+    //The returnResolver is what gets called when the webview is closed or the alignment result is returned.
+    private returnResolver : ((value: TSourceTargetAlignment[] | undefined) => void) | undefined = undefined;
+    private returnCalled : boolean = false;
 
-    public async show() {
-        const webviewPanel = vscode.window.createWebviewPanel(
+	private _disposables: vscode.Disposable[] = [];
+    private _panel?: vscode.WebviewPanel = undefined;
+
+    constructor( private _context: vscode.ExtensionContext, private alignmentInfo: {wordBank: TWord[], alignments: TSourceTargetAlignment[], reference: string} ) {} //private keyword declare and assign properties automatically
+
+    public show() : Promise<TSourceTargetAlignment[] | undefined>  {
+        this._panel = vscode.window.createWebviewPanel(
             'codexWordMap',
             'Codex WordMap',
             vscode.ViewColumn.Active,
@@ -23,8 +30,54 @@ class WordAlignWebview{
                 localResourceRoots: [vscode.Uri.joinPath(this._context.extensionUri, 'webview-ui','wordmap_wrapper','build')]
             }
         );
-        webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
+        this._panel.webview.html = this.getHtmlForWebview(this._panel.webview);
+
+
+		// Listen for when the panel is disposed
+		// This happens when the user closes the panel or when the panel is closed programmatically
+		this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+
+        //Handle messages from the webview
+        this._panel.webview.onDidReceiveMessage(
+            message => {
+                switch (message.command) {
+                    case 'return':
+                        if( !this.returnCalled ) {
+                            this.returnCalled = true;
+                            this.returnResolver?.(message.content);
+                        }
+                        this.dispose();
+                        break;
+                    case 'close': 
+                        this.dispose();
+                        break;
+                }
+            },
+            undefined,
+			this._disposables
+        );
+
+        return new Promise( (resolve) => {
+            this.returnResolver = resolve;
+        } );
    }
+
+    public dispose() {
+        if( !this.returnCalled ){
+            this.returnCalled = true;
+            this.returnResolver?.(undefined);
+        }
+
+        // Clean up our resources
+        this._panel?.dispose();
+
+        while (this._disposables.length) {
+            const x = this._disposables.pop();
+            if (x) {
+                x.dispose();
+            }
+        }
+    }
 
     private getHtmlForWebview( webview: vscode.Webview ) {
 
