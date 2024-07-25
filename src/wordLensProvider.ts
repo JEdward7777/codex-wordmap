@@ -2,6 +2,7 @@
 import * as vscode from "vscode";
 import { extractVerseRefFromLine } from "./utils/verseRefUtils";
 import { showWebview } from "./wordAlignWebview";
+import { doCodexWordMapping } from "./codexWordmapJunction";
 
 function extractLineFromNotebook(notebookDocument: vscode.NotebookDocument, verseRef: string): {cell: vscode.NotebookCell, line_number: number, line: string}|undefined {
     //spin through the cells in the document and find the line that starts with verseRef.
@@ -64,7 +65,7 @@ export const registerCodeLenses = (context: vscode.ExtensionContext) => {
     context.subscriptions.push(
         vscode.commands.registerCommand(
             'codex-wordmap.wordmap',
-            (verseRef: string, uri: string) => {
+            async (verseRef: string, uri: string) => {
                 //Pop up a dialog showing the reference.
                 vscode.window.showInformationMessage(verseRef);
 
@@ -75,7 +76,7 @@ export const registerCodeLenses = (context: vscode.ExtensionContext) => {
                 if (notebookDocument) {
                     const foundLine = extractLineFromNotebook(notebookDocument, verseRef);
                     if( foundLine ){
-                        showWebview( context, foundLine.line );
+                        await doCodexWordMapping( context, notebookDocument, foundLine.line, verseRef );
                     }
                 }
             }

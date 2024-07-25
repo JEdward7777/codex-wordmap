@@ -11,10 +11,10 @@ import { getWorkSpaceFolder } from '../utils';
 
 type UsfmImportParameters = {
     usfmFiles: vscode.Uri[];
-}
+};
 type UsfmExportParameters = {
     usfmSaveUri: vscode.Uri;
-}
+};
 
 async function getImportParameters() : Promise<UsfmImportParameters> {
     //https://vshaxe.github.io/vscode-extern/vscode/OpenDialogOptions.html
@@ -87,7 +87,7 @@ async function collectScriptureDataFromNotebook( notebook: vscode.NotebookDocume
                     const matchLength = match[0].length;
                     let firstNonMatchedIndex = matchIndex + matchLength;
                     //inc if that is a space.
-                    if (firstNonMatchedIndex < line.length && line[firstNonMatchedIndex] == " ") {
+                    if (firstNonMatchedIndex < line.length && line[firstNonMatchedIndex] === " ") {
                         firstNonMatchedIndex++;
                     }
                     //The verse is everything after the capture.
@@ -288,7 +288,7 @@ function combineIndexWithContentIntoActions(
             //another chapter.  I will test for a c==0 and if b>0 we will set our insertion point to be the length of the previous block.
             //This could fail if something else ends up being at the front of the chapter which we don't know about but makes the chapter mark
             //we are inserting in front of not be at c==0.
-            if( insertionLocation.c == 0 && insertionLocation.b > 0 ){  //bookmark1
+            if( insertionLocation.c === 0 && insertionLocation.b > 0 ){  //bookmark1
                 insertionLocation.b--;
                 insertionLocation.c = perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks?.[insertionLocation.b]?.content?.length ?? 0;
             }
@@ -349,13 +349,13 @@ function combineIndexWithContentIntoActions(
     //I have b-a because I want this in descending order so that the list is processed from the end to the beginning.
     actions.sort( (a,b) => {
         //if the location of operation is different, then obviously that order needs to be respected.
-        if( a.index.b != b.index.b ) return b.index.b - a.index.b;
-        if( a.index.c != b.index.c ) return b.index.c - a.index.c;
+        if( a.index.b !== b.index.b ) return b.index.b - a.index.b;
+        if( a.index.c !== b.index.c ) return b.index.c - a.index.c;
 
         //We now need to sort by chapter, because if we have a mix of createChapter and insertVerse
         //we need them interleaved by chapter so that the verses end up in the correct chapter even though
         //they all have the same insertion point.
-        if( a.chapterNumber != b.chapterNumber ){
+        if( a.chapterNumber !== b.chapterNumber ){
             //still have reversed sorting because repeated insertion at the same index will produce a
             //a reversed result from action order.
             return b.chapterNumber - a.chapterNumber;
@@ -370,14 +370,14 @@ function combineIndexWithContentIntoActions(
         const operationOrder = ["createChapter", "insertVerse", "edit",];
         const aTypeOrder = operationOrder.indexOf(a.type);
         const bTypeOrder = operationOrder.indexOf(b.type);
-        if( aTypeOrder != bTypeOrder ) return bTypeOrder - aTypeOrder;
+        if( aTypeOrder !== bTypeOrder ) return bTypeOrder - aTypeOrder;
 
         //finally we need to sort by verse number.  This is for multiple verse insertions so that they
         //end up in the right order.
         if( a.verseNumber !== undefined && b.verseNumber !== undefined ){
             //again reverse sort on verseNumber because the action order is opposite of the resulting
             //perf order.
-            if( a.verseNumber != b.verseNumber ) return b.verseNumber - a.verseNumber;
+            if( a.verseNumber !== b.verseNumber ) return b.verseNumber - a.verseNumber;
         }
 
         //If we get here the moon must be imploding... or they added two verses with the same reference.
@@ -449,9 +449,9 @@ function editVerse( perf: Perf, chapterNumber: number, verseNumber: number, newV
     //outward.
     function getPerfChar( _perf: Perf, _blockIndex: number, _contentIndex: number, _charIndex: number ){
         const content = _perf?.sequences?.[_perf?.main_sequence_id ?? ""]?.blocks?.[_blockIndex]?.content?.[_contentIndex];
-        if( typeof( content ) == "string" ){
+        if( typeof( content ) === "string" ){
             return content[_charIndex];
-        }else if( typeof( content ) == "object" ){
+        }else if( typeof( content ) === "object" ){
             return content.content?.join("")[_charIndex];
         }
         return "";
@@ -459,12 +459,12 @@ function editVerse( perf: Perf, chapterNumber: number, verseNumber: number, newV
     function dropPerfChar( _perf: Perf, _blockIndex: number, _contentIndex: number, _charIndex: number ){
         let dropped_char : string | undefined = undefined;
         const contentArray = _perf?.sequences?.[_perf?.main_sequence_id ?? ""]?.blocks?.[_blockIndex]?.content;
-        if( contentArray != undefined ){
+        if( contentArray !== undefined ){
             const content = contentArray[_contentIndex];
-            if( typeof( content ) == "string" ){
+            if( typeof( content ) === "string" ){
                 dropped_char = content[_charIndex];
                 contentArray[_contentIndex] = content.substring(0, _charIndex) + content.substring(_charIndex + 1);
-            }else if( typeof( content ) == "object" ){
+            }else if( typeof( content ) === "object" ){
                 let usedCharIndex = _charIndex;
                 for(let i = 0; i < content.content!.length; ++i ){
                     const oneContent = content.content![i];
@@ -500,7 +500,7 @@ function editVerse( perf: Perf, chapterNumber: number, verseNumber: number, newV
                 //if our _charIndex is -1 for this insertion, then that means, insert before this word boundary.
                 //If _charIndex is a word, then we need to insert a string at the current index.
                 //If the current index is already a string, then this has already happened.
-                if( typeof(contentArray[_contentIndex]) == "string" ){
+                if( typeof(contentArray[_contentIndex]) === "string" ){
                     contentArray[_contentIndex] = _char + contentArray[_contentIndex];
                 }else{
                     contentArray.splice( _contentIndex, 0, _char );
@@ -509,16 +509,16 @@ function editVerse( perf: Perf, chapterNumber: number, verseNumber: number, newV
                 const content : string | PerfContent | undefined = contentArray?.[_contentIndex];
                 if( content === undefined ){
                     throw new Error("Internal error.  Attempting to insert a character into a perf that does not exist.");
-                }else if( typeof( content ) == "string" ){
+                }else if( typeof( content ) === "string" ){
                     contentArray![_contentIndex] = content.slice(0, _charIndex) + _char + content.slice(_charIndex);
-                }else if( typeof( content ) == "object" ){
+                }else if( typeof( content ) === "object" ){
                     
                     const contentLength = content.content!.join("").length;
                     if( _charIndex > contentLength ){
                         //If _charIndex is > then the length of this word, then it means to add it outside of the word boundary.
                         //So if the next index is a string then add the content as a prefix to that string, otherwise
                         //we need to insert a string at the following index.
-                        if( _contentIndex+1 < contentArray.length && typeof(contentArray[_contentIndex+1]) == "string" ){
+                        if( _contentIndex+1 < contentArray.length && typeof(contentArray[_contentIndex+1]) === "string" ){
                             contentArray[_contentIndex+1] = _char + contentArray[_contentIndex+1];
                         }else{
                             contentArray.splice( _contentIndex+1, 0, _char );
@@ -542,9 +542,9 @@ function editVerse( perf: Perf, chapterNumber: number, verseNumber: number, newV
     }
     function getPerfPiece( _perf: Perf, _blockIndex: number, _contentIndex: number ){
         const content = _perf?.sequences?.[_perf?.main_sequence_id ?? ""]?.blocks?.[_blockIndex]?.content?.[_contentIndex];
-        if( typeof( content ) == "string" ){
+        if( typeof( content ) === "string" ){
             return content;
-        }else if( typeof( content ) == "object" ){
+        }else if( typeof( content ) === "object" ){
             return content.content?.join("");
         }
         return "";
@@ -553,19 +553,19 @@ function editVerse( perf: Perf, chapterNumber: number, verseNumber: number, newV
         const contentArray = _perf?.sequences?.[_perf?.main_sequence_id ?? ""]?.blocks?.[_blockIndex]?.content;
         const droppedPiece = contentArray?.splice( _contentIndex, 1 );
 
-        if( droppedPiece === undefined || droppedPiece.length == 0 ){
+        if( droppedPiece === undefined || droppedPiece.length === 0 ){
             throw new Error("Internal error.  Attempting to drop a perf that does not exist.");
         }
 
-        if( typeof( droppedPiece[0]) != "string" && 
-        (typeof(droppedPiece[0]) != "object" || (droppedPiece[0] as PerfContent)?.type != "wrapper" || (droppedPiece[0] as PerfContent)?.subtype != "usfm:w") ){
+        if( typeof( droppedPiece[0]) !== "string" && 
+        (typeof(droppedPiece[0]) !== "object" || (droppedPiece[0] as PerfContent)?.type !== "wrapper" || (droppedPiece[0] as PerfContent)?.subtype !== "usfm:w") ){
             throw new Error("Internal error.  Attempting to drop a perf piece that is not a word or a string.");
         }
     }
 
     function splitPerfPiece( _perf: Perf, _blockIndex: number, _contentIndex: number, _charIndex: number, _makeWord: boolean ){
         const contentArray = _perf?.sequences?.[_perf?.main_sequence_id ?? ""]?.blocks?.[_blockIndex]?.content;
-        if( contentArray != undefined ){
+        if( contentArray !== undefined ){
             const content : string | PerfContent | undefined = contentArray?.[_contentIndex];
 
 
@@ -574,9 +574,9 @@ function editVerse( perf: Perf, chapterNumber: number, verseNumber: number, newV
             //pull the content.
             if( content === undefined ){
                 throw new Error("Internal error.  Attempting to split a perf that does not exist.");
-            }else if( typeof( content ) == "string" ){
+            }else if( typeof( content ) === "string" ){
                 existingContentString = content;
-            }else if( typeof( content ) == "object" && content.type == "wrapper" && content.subtype == "usfm:w" ){
+            }else if( typeof( content ) === "object" && content.type === "wrapper" && content.subtype === "usfm:w" ){
                 existingContentString = content.content!.join("");
             }else{
                 throw new Error("Internal error.  Attempting to split a perf piece that is not a word or a string.");
@@ -589,8 +589,8 @@ function editVerse( perf: Perf, chapterNumber: number, verseNumber: number, newV
             //if we are not making a word, then we need to insert a zero length string
             //before this string so that new chars get added to that.  If that is a word
             //it will get upgraded later.
-            if( _charIndex == -1 ){
-                if( typeof( content ) == "string" ){
+            if( _charIndex === -1 ){
+                if( typeof( content ) === "string" ){
                     if( _makeWord ){
                         const newWord = {
                             type: "wrapper",
@@ -619,7 +619,7 @@ function editVerse( perf: Perf, chapterNumber: number, verseNumber: number, newV
 
 
                 //put part1 back in.
-                if( typeof( content ) == "string" ){
+                if( typeof( content ) === "string" ){
                     contentArray![_contentIndex] = part1;
                 }else{
                     content!.content = [ part1 ];
@@ -642,7 +642,7 @@ function editVerse( perf: Perf, chapterNumber: number, verseNumber: number, newV
     }
 
     //if the existing perf verse is empty, then just concat it in.
-    if( attributedTarget.length == 0 ){
+    if( attributedTarget.length === 0 ){
         const splicePoint = {b:insertionIndex.b,c:insertionIndex.c+1}; //+1 to get after the verse marker.
         perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks?.[splicePoint.b]?.content?.splice( splicePoint.c, 0, ...newPerfVerse );
     }else{
@@ -670,7 +670,7 @@ function editVerse( perf: Perf, chapterNumber: number, verseNumber: number, newV
         let insertCharacterIndex   = lastAttributedTarget.charIndex + 1; //add one so that it would insert after the last char if we have inserts before getting there.
         for( let i = editDiffs.length-1; i >= 0; i-- ){
             const editDiff = editDiffs[i];
-            if( editDiff.state == DiffState.STATE_PASSING_2ND ){
+            if( editDiff.state === DiffState.STATE_PASSING_2ND ){
                 //This is an insert which means it is referencing the fake perf, and we need to copy the index stuff into it.
                 editDiff.content.blockIndex   = insertBlockIndex;
                 editDiff.content.contentIndex = insertContentIndex;
@@ -694,33 +694,33 @@ function editVerse( perf: Perf, chapterNumber: number, verseNumber: number, newV
             const editDiff = editDiffs[i];
             const targetChar = editDiff.content;
             if( !targetChar.isMeta ){
-                if( editDiff.state == DiffState.STATE_PASSING_1ST ){
+                if( editDiff.state === DiffState.STATE_PASSING_1ST ){
                     //passing first means deleting the target character.  So it needs to be spliced out.
                     //see if supplemented is in the content.. If it is supplemented, you can't remove it.
                     if( !editDiff.content.supplemented ){
                         const droppedChar = dropPerfChar( perf, targetChar.blockIndex, targetChar.contentIndex, targetChar.charIndex );
-                        if( droppedChar != targetChar.char ){
+                        if( droppedChar !== targetChar.char ){
                             throw new Error("Internal error.  Attempting to remove a character that is not in the perf.");
                         }
                     }
-                }else if( editDiff.state == DiffState.STATE_PASSING_2ND ){
+                }else if( editDiff.state === DiffState.STATE_PASSING_2ND ){
                     //passing second means adding the target character.  So it needs to be added.
                     insertIntoPerfPiece( perf, targetChar.blockIndex, targetChar.contentIndex, targetChar.charIndex, targetChar.char );
-                }else if( editDiff.state == DiffState.STATE_MATCH ){
+                }else if( editDiff.state === DiffState.STATE_MATCH ){
                     //just double check that this char is correct.
                     //You can't verify a match with supplemented characters.
                     if( !editDiff.content.supplemented ){
                         const currentChar = getPerfChar( perf, targetChar.blockIndex, targetChar.contentIndex, targetChar.charIndex );
-                        if( currentChar != targetChar.char ){
+                        if( currentChar !== targetChar.char ){
                             throw new Error("Internal error.  Character match is wrong.");
                         }
                     }
                 }
             }else{ //if is meta (word boundary changes)
                 //meta edits are the addition and removal of word boundaries and are a bit more interesting.
-                if( editDiff.state == DiffState.STATE_PASSING_1ST ){
+                if( editDiff.state === DiffState.STATE_PASSING_1ST ){
 
-                    if( editDiff.content.char == "<" ){
+                    if( editDiff.content.char === "<" ){
                         //This means that we are removing the current start of word boundary.  So the content of the current word or string
                         //needs to be added to the end of the string or word that comes at a lower perf index.
                         if( editDiff.content.charIndex !== -1 ){
@@ -746,12 +746,12 @@ function editVerse( perf: Perf, chapterNumber: number, verseNumber: number, newV
                                 }
                             }
                         }
-                    }else if( editDiff.content.char == ">" ){
+                    }else if( editDiff.content.char === ">" ){
                         //This means the removal of the end of a word boundary.  But the indexing for this is at the tail end of the word that
                         //the boundary is being removed on.
                         //So we take all of the next perf index and add it to the current item.  This item type is defined by the start boundary
                         //of it, which we will leave alone unless the diff gets there and changes it.
-                        if( editDiff.content.charIndex != getPerfPiece( perf, editDiff.content.blockIndex, editDiff.content.contentIndex )?.length ){
+                        if( editDiff.content.charIndex !== getPerfPiece( perf, editDiff.content.blockIndex, editDiff.content.contentIndex )?.length ){
                             throw new Error( "Internal error.  Trying to remove a word boundary that is not at the end of a word." );
                         }
                         if( i < editDiffs.length-1 ){
@@ -770,16 +770,16 @@ function editVerse( perf: Perf, chapterNumber: number, verseNumber: number, newV
                             }
                         }
                     }
-                }else if( editDiff.state == DiffState.STATE_PASSING_2ND ){
+                }else if( editDiff.state === DiffState.STATE_PASSING_2ND ){
                     //This means that we are inserting a boundary.  So we trim off the rest of the current word or string
                     //and add it as a new content location after this.  Depending on if this is a begin or end boundary
                     //changes if we create a word or string after this.
                     //for insertions we get our index information from the reverse drag of references, so it is always within context of the last thing.
                     //Not like in the removals where sometimes the location is before the boundary and sometimes after the boundary.
-                    if( editDiff.content.char == "<" ){
+                    if( editDiff.content.char === "<" ){
                         //we are inserting the start of word boundary.  So chop off the rest of the content and insert as a word.
                         splitPerfPiece( perf, editDiff.content.blockIndex, editDiff.content.contentIndex, editDiff.content.charIndex, true );
-                    }else if( editDiff.content.char == ">" ){
+                    }else if( editDiff.content.char === ">" ){
                         //we are inserting the end of word boundary.  So we chip of the rest of the current and insert it as intraword.
                         splitPerfPiece( perf, editDiff.content.blockIndex, editDiff.content.contentIndex, editDiff.content.charIndex, false );
                     }
@@ -829,12 +829,14 @@ function executeNotebookEditActions( unupdated_perf : Perf, notebook_edit_action
     }
 }
 
-async function getPerfFromActiveNotebook() : Promise<Perf> {
+export async function getPerfFromActiveNotebook( notebook?: vscode.NotebookDocument) : Promise<Perf> {
 
 
-    const notebookEditor = vscode.window.activeNotebookEditor;
-    if (!notebookEditor) throw new Error('No active notebook editor found');
-    const notebook = notebookEditor.notebook;
+    if( !notebook ){
+        const notebookEditor = vscode.window.activeNotebookEditor;
+        if (!notebookEditor) throw new Error('No active notebook editor found');
+        notebook = notebookEditor.notebook;
+    }
 
     //iterate through each cell in the notebook.
 
@@ -863,44 +865,7 @@ async function doUsfmExport(codex_filename: string, exportParameters: UsfmExport
 }
 
 
-/**
- * Appends a smiley face to the content of the first cell in the active notebook editor.
- *
- * @return {Promise<void>} A promise that resolves when the smiley face is successfully appended, or rejects with an error message if no active notebook editor is found or if the operation fails.
- */
-async function doSmileyToFirstCell() {
-    const notebookEditor = vscode.window.activeNotebookEditor;
-    if (!notebookEditor) {
-        vscode.window.showErrorMessage('No active notebook editor found');
-        return;
-    }
-
-
-    const notebook = notebookEditor.notebook;
-
-    // Check if the notebook has at least one cell
-    if (notebook.cellCount > 0) {
-        const firstCell = notebook.cellAt(0);
-        const updatedText = firstCell.document.getText() + ' 😊';
-
-        // Create an edit to update the cell's content
-        const edit = new vscode.WorkspaceEdit();
-        edit.replace(firstCell.document.uri, new vscode.Range(0, 0, firstCell.document.lineCount, 0), updatedText);
-
-        // Apply the edit
-        const success = await vscode.workspace.applyEdit(edit);
-        if (success) {
-            vscode.window.showInformationMessage('Smiley appended to the first cell');
-        } else {
-            vscode.window.showErrorMessage('Failed to append smiley to the first cell');
-        }
-    } else {
-        vscode.window.showErrorMessage('The notebook does not contain any cells');
-    }
-}
-
-
-async function readUsfmData( usfmFiles: vscode.Uri[] ) {
+export async function readUsfmData( usfmFiles: vscode.Uri[] ) {
     //read them all in parallel
     const filenameToUsfmData: { [filename: string]: string} = Object.fromEntries(
         await Promise.all( 
@@ -1090,7 +1055,7 @@ async function generateNotebooks( filenameToPerf: { [filename: string]: Perf } )
             }
 
             //If the chapter or filename has changed then add the notes to the previous chapter if it exists.
-            if( (currentChapter != -1 && ((currentChapter !== reference.chapter) || (currentFilename && currentFilename !== notebookFilename))) ){
+            if( (currentChapter !== -1 && ((currentChapter !== reference.chapter) || (currentFilename && currentFilename !== notebookFilename))) ){
                 filenameToCells[currentFilename].push(
                     new vscode.NotebookCellData(
                         vscode.NotebookCellKind.Markup,
@@ -1106,7 +1071,7 @@ async function generateNotebooks( filenameToPerf: { [filename: string]: Perf } )
             const cells = filenameToCells[notebookFilename];
 
             //If we are in a new chapter, create the chapter header.
-            if( currentChapter != reference.chapter || (currentFilename && currentFilename !== notebookFilename)){
+            if( currentChapter !== reference.chapter || (currentFilename && currentFilename !== notebookFilename)){
                 const newCell = new vscode.NotebookCellData(
                     vscode.NotebookCellKind.Markup,
                     `# Chapter ${reference.chapter}`,
@@ -1118,7 +1083,7 @@ async function generateNotebooks( filenameToPerf: { [filename: string]: Perf } )
                         chapter: "" + reference.chapter
                     }
                 };
-                if( reference.chapter == 1 ){
+                if( reference.chapter === 1 ){
                     newCell.metadata.perf = perf;
                 }
                 cells.push(newCell);
@@ -1154,7 +1119,7 @@ async function generateNotebooks( filenameToPerf: { [filename: string]: Perf } )
     }
 
     //close out the last one.
-    if( currentFilename && currentChapter != -1  ){
+    if( currentFilename && currentChapter !== -1  ){
         filenameToCells[currentFilename].push(
             new vscode.NotebookCellData(
                 vscode.NotebookCellKind.Markup,

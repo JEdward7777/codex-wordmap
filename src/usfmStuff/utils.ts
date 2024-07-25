@@ -269,7 +269,7 @@ export function pullVerseFromPerf( reference: string, perf: Perf, index: TBlockC
     
     const referenceParts = reference.split(":");
 
-    if( referenceParts.length != 2 ) return undefined;
+    if( referenceParts.length !== 2 ) return undefined;
 
     const chapter : string = referenceParts[0];
     const verse : string = referenceParts[1];
@@ -287,7 +287,7 @@ export function pullVerseFromPerf( reference: string, perf: Perf, index: TBlockC
     for( let blockIndex = 0; blockIndex < (perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks?.length ?? 0); blockIndex++ ){
         let block = perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks?.[blockIndex];    
     
-        if( block != undefined && block.type == 'paragraph' ){
+        if( block !== undefined && block.type === 'paragraph' ){
             for( let contentIndex = 0; contentIndex < (block?.content?.length ?? 0); contentIndex++ ){
                 let content = block?.content?.[contentIndex];
 
@@ -302,20 +302,20 @@ export function pullVerseFromPerf( reference: string, perf: Perf, index: TBlockC
                     content = block?.content?.[contentIndex];
                 }
             
-                if( typeof(content) == 'object' && content.type == 'mark' ){
-                    if( content.subtype == 'chapter' ){
+                if( typeof(content) === 'object' && content.type === 'mark' ){
+                    if( content.subtype === 'chapter' ){
                         currentChapter = content?.atts?.number ?? "-1";
-                    }else if( content.subtype == 'verses' ){
+                    }else if( content.subtype === 'verses' ){
                         currentVerse = content?.atts?.number ?? "-1";
                     }
                     //if we have changed the reference and we have already
                     //collected content, then we can stop scanning and just return
-                    if( collectedContent.length > 0 && (currentChapter != chapter || currentVerse != verse) ){
+                    if( collectedContent.length > 0 && (currentChapter !== chapter || currentVerse !== verse) ){
                         return collectedContent;
                     }
                 }else{
                     //if we are in the correct reference then collect the content.
-                    if( currentChapter == chapter && currentVerse == verse ){
+                    if( currentChapter === chapter && currentVerse === verse ){
                         collectedContent.push( content );
                     }
                 }
@@ -336,12 +336,12 @@ export function pullVersesFromPerf( perf: Perf ): { [key: string]: PerfVerse } {
     //first iterate the chapters.
     //perf.sequences[perf.main_sequence_id].blocks is an array.
     for( const [blockIndex, block] of (perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks ?? []).entries() ){
-        if( block.type == 'paragraph' ){
+        if( block.type === 'paragraph' ){
             for( const [contentIndex, content] of (block.content ?? []).entries() ){
-                if( typeof(content) == 'object' && content.type == 'mark' ){
-                    if( content.subtype == 'chapter' ){
+                if( typeof(content) === 'object' && content.type === 'mark' ){
+                    if( content.subtype === 'chapter' ){
                         currentChapter = content?.atts?.number ?? "-1";
-                    }else if( content.subtype == 'verses' ){
+                    }else if( content.subtype === 'verses' ){
                         currentVerse = content?.atts?.number ?? "-1";
                     }
                 }else{
@@ -369,7 +369,7 @@ export function chopUpPerfIntoChaptersAndVerses( filenamesToPerf: { [filename: s
         Object.entries(verses).forEach(([reference, verse]) => {
             const referenceParts = reference.split(":");
 
-            if( referenceParts.length != 2 ) return;
+            if( referenceParts.length !== 2 ) return;
 
             const chapterNumber : number = parseInt(referenceParts[0]);
             const verseNumber : number = parseInt(referenceParts[1]);
@@ -397,7 +397,7 @@ export function replacePerfVerseInPerf( perf :Perf, perfVerse: PerfVerse, refere
     
     const referenceParts = reference.split(":");
 
-    if( referenceParts.length != 2 ) return undefined;
+    if( referenceParts.length !== 2 ) return undefined;
 
     const chapter : string = referenceParts[0];
     const verse : string = referenceParts[1];
@@ -410,19 +410,19 @@ export function replacePerfVerseInPerf( perf :Perf, perfVerse: PerfVerse, refere
 
     //iterate the chapters.
     for( const block of perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks ?? [] ){
-        if( block.type == 'paragraph' ){
+        if( block.type === 'paragraph' ){
             const newContent = [];
             for( const content of block.content ?? [] ){
                 let dropContent  = false;
                 let pushNewVerse = false;
-                if( typeof(content) == 'object' && content.type == 'mark' ){
-                    if( content.subtype == 'chapter' ){
+                if( typeof(content) === 'object' && content.type === 'mark' ){
+                    if( content.subtype === 'chapter' ){
                         currentChapter = content.atts?.number ?? "-1";
-                    }else if( content.subtype == 'verses' ){
+                    }else if( content.subtype === 'verses' ){
                         currentVerse = content.atts?.number ?? "-1";
 
                         //if the chapter and verse are correct, then dump the inserted content in.
-                        if( currentChapter == chapter && currentVerse == verse ){
+                        if( currentChapter === chapter && currentVerse === verse ){
                             //I set a flag here instead of just push it because
                             //the content has to be pushed after the verse indicator
                             pushNewVerse = true;
@@ -431,7 +431,7 @@ export function replacePerfVerseInPerf( perf :Perf, perfVerse: PerfVerse, refere
                 }else{
                     //if we are in the existing verse, then drop all existing content
                     //so that the inserted content is not doubled.
-                    if( currentChapter == chapter && currentVerse == verse ){
+                    if( currentChapter === chapter && currentVerse === verse ){
                         dropContent = true;
                     }
                 }
@@ -564,7 +564,7 @@ function perfContentToTWord( perfContent: any | string, type: string ): TWord {
     const word : TWord = {
         type
     };
-    if( typeof( perfContent ) == "string" ) { 
+    if( typeof( perfContent ) === "string" ) { 
         word["text"       ] = perfContent; 
     }else{
         if (perfContent?.atts?.["x-occurrence" ] ) { word["occurrence" ] = parseInt(perfContent.atts["x-occurrence" ].join(" ")); }
@@ -601,16 +601,16 @@ export function extractWrappedWordsFromPerfVerse( perfVerse: PerfVerse, type: st
     let index = 0;
     for( const content of perfVerse ){
         //If content is a string just skip it.  It is like commas and stuff.
-        if( typeof content == 'string' ){
+        if( typeof content === 'string' ){
             //pass
-        }else if( content.type == "wrapper" && content.subtype == "usfm:w" ){
+        }else if( content.type === "wrapper" && content.subtype === "usfm:w" ){
             const wrappedWord = perfContentToTWord( content, type );
             wrappedWord.disabled = inMapping; //If the word is mapped then disable it for the wordBank.
             wrappedWord.index = index++;
             wrappedWords.push( wrappedWord );
-        }else if( content.type == "start_milestone" && content.subtype == "usfm:zaln" ){
+        }else if( content.type === "start_milestone" && content.subtype === "usfm:zaln" ){
             inMapping = true;
-        }else if( content.type == "end_milestone" && content.subtype == "usfm:zaln" ){
+        }else if( content.type === "end_milestone" && content.subtype === "usfm:zaln" ){
             //I know the end_milestone can come in clumps, but this works anyways.
             inMapping = false;
         }
@@ -634,7 +634,7 @@ export function extractAlignmentsFromPerfVerse( perfVerse: PerfVerse ): TSourceT
     let targetIndex = 0;
     for( const content of perfVerse ){
 
-        if( typeof(content) == 'object' && content.type == "start_milestone" && content.subtype == "usfm:zaln" ){
+        if( typeof(content) === 'object' && content.type === "start_milestone" && content.subtype === "usfm:zaln" ){
             //we can't index the source words right now because they are out of order.
             //we will do it later when the alignments are supplemented with the unused source words.
             sourceStack.push( perfContentToTWord(content, PRIMARY_WORD) );
@@ -642,7 +642,7 @@ export function extractAlignmentsFromPerfVerse( perfVerse: PerfVerse ): TSourceT
             //If there are any target words then just drop them because they aren't part of this
             //group.
             targetStack.length = 0;
-        }else if( typeof(content) == 'object' && content.type == "end_milestone" && content.subtype == "usfm:zaln" ){
+        }else if( typeof(content) === 'object' && content.type === "end_milestone" && content.subtype === "usfm:zaln" ){
             //process the source and target stacks when we are a place where we are popping
             if( targetStack.length > 0 ){
                 const sourceNgram = [...sourceStack];
@@ -664,7 +664,7 @@ export function extractAlignmentsFromPerfVerse( perfVerse: PerfVerse ): TSourceT
             }
 
             sourceStack.pop();
-        }else if( typeof(content) == 'object' && content.type == "wrapper" && content.subtype == "usfm:w" ){
+        }else if( typeof(content) === 'object' && content.type === "wrapper" && content.subtype === "usfm:w" ){
             const wrappedWord = perfContentToTWord( content, SECONDARY_WORD );
             wrappedWord.index = targetIndex++;
             targetStack.push( wrappedWord );
@@ -749,8 +749,8 @@ export function reindexPerfVerse( perfVerse: PerfVerse, doDeepCopy: boolean = tr
     const occurrenceMap = new Map<string, number>();
     for( const perfContent of perfVerseCopy ){
         if(  typeof perfContent === "object" && 
-        ("type" in perfContent) && perfContent.type == "wrapper" && 
-        ("subtype" in perfContent) && perfContent.subtype == "usfm:w" ){
+        ("type" in perfContent) && perfContent.type === "wrapper" && 
+        ("subtype" in perfContent) && perfContent.subtype === "usfm:w" ){
             const text = (perfContent?.["content"])?perfContent.content.join(" "):"";
             const occurrence = (occurrenceMap.get( text ) || 0) + 1;
             occurrenceMap.set( text, occurrence );
@@ -760,8 +760,8 @@ export function reindexPerfVerse( perfVerse: PerfVerse, doDeepCopy: boolean = tr
     }
     for( const perfContent of perfVerseCopy ){
         if( typeof perfContent === "object" && 
-        ("type" in perfContent) && perfContent.type == "wrapper" && 
-        ("subtype" in perfContent) && perfContent.subtype == "usfm:w" ){
+        ("type" in perfContent) && perfContent.type === "wrapper" && 
+        ("subtype" in perfContent) && perfContent.subtype === "usfm:w" ){
             const text = (perfContent?.["content"])?perfContent.content.join(" "):"";
             if( !perfContent.atts ) perfContent.atts = {};
             perfContent.atts["x-occurrences" ] = [ "" + occurrenceMap.get( text ) ];
@@ -790,8 +790,8 @@ export function replaceAlignmentsInPerfVerse( perfVerse: PerfVerse, newAlignment
 
     const withoutOldAlignments = perfVerse.filter( ( perfContent : any ) => {
         if( ("type" in perfContent) && 
-        (perfContent.type == "start_milestone" || perfContent.type == "end_milestone") &&
-        ("subtype" in perfContent) && perfContent.subtype == "usfm:zaln" ){
+        (perfContent.type === "start_milestone" || perfContent.type === "end_milestone") &&
+        ("subtype" in perfContent) && perfContent.subtype === "usfm:zaln" ){
             return false;
         }
         return true;
@@ -813,9 +813,9 @@ export function replaceAlignmentsInPerfVerse( perfVerse: PerfVerse, newAlignment
         //we can just put it at the end but we will instead look backwards and find the last place
         //a word wrapper is and put it after that.
         let lastWordIndex = result.length - 1;
-        while( lastWordIndex >= 0 && typeof(result[lastWordIndex]) == "object" &&
-         !(( "type"    in (result[lastWordIndex] as PerfBlock)) && (result[lastWordIndex] as PerfBlock).type    == "wrapper" && 
-           ( "subtype" in (result[lastWordIndex] as PerfBlock)) && (result[lastWordIndex] as PerfBlock).subtype  == "usfm:w") ){
+        while( lastWordIndex >= 0 && typeof(result[lastWordIndex]) === "object" &&
+         !(( "type"    in (result[lastWordIndex] as PerfBlock)) && (result[lastWordIndex] as PerfBlock).type    === "wrapper" && 
+           ( "subtype" in (result[lastWordIndex] as PerfBlock)) && (result[lastWordIndex] as PerfBlock).subtype  === "usfm:w") ){
             lastWordIndex--;
         }
 
@@ -832,13 +832,13 @@ export function replaceAlignmentsInPerfVerse( perfVerse: PerfVerse, newAlignment
 
     for( const perfContent of withoutOldAlignments ){
         //Only do something different if it is a wrapped word.
-        if( typeof( perfContent ) == "object" && ("type" in perfContent) && perfContent.type == "wrapper" && 
-        ("subtype" in perfContent) && perfContent.subtype == "usfm:w" ){
+        if( typeof( perfContent ) === "object" && ("type" in perfContent) && perfContent.type === "wrapper" && 
+        ("subtype" in perfContent) && perfContent.subtype === "usfm:w" ){
             
             const relevantAlignment = targetWordHashToAlignment.get( hashWordToString( perfContentToTWord( perfContent, SECONDARY_WORD ) ) );
 
             //If the current currentSourceAlignmentHash is not correct and it is set we need to close it out.
-            if( currentSourceAlignmentHash != (hashNgramToString(relevantAlignment?.sourceNgram) ?? "") ){
+            if( currentSourceAlignmentHash !== (hashNgramToString(relevantAlignment?.sourceNgram) ?? "") ){
                 closeSourceRange();
 
                 //add in the new alignment.
@@ -897,7 +897,7 @@ export function replaceAlignmentsInPerfInPlace( perf: Perf, chapter: number, ver
     const contentIterator = {...index};
 
     const closeSourceRange = () => {
-        if( currentSourceAlignmentLength == 0 ) return;
+        if( currentSourceAlignmentLength === 0 ) return;
         //we can just put it at the end but we will instead look backwards and find the last place
         //a word wrapper is and put it after that.
         const lastWordIndex = {b: contentIterator.b, c: contentIterator.c-1 };
@@ -907,10 +907,10 @@ export function replaceAlignmentsInPerfInPlace( perf: Perf, chapter: number, ver
         }
 
         // eslint-disable-next-line no-constant-condition
-        while( lastWordIndex.b > index.b || lastWordIndex.b == index.b && lastWordIndex.c > index.c ){
+        while( lastWordIndex.b > index.b || lastWordIndex.b === index.b && lastWordIndex.c > index.c ){
             const lastWord = perf.sequences?.[perf.main_sequence_id ?? ""]?.blocks?.[lastWordIndex.b]?.content?.[lastWordIndex.c];
-            if( typeof(lastWord) == "object" && "type" in lastWord ){
-                if( lastWord.type == "wrapper" && lastWord.subtype == "usfm:w" ) break;
+            if( typeof(lastWord) === "object" && "type" in lastWord ){
+                if( lastWord.type === "wrapper" && lastWord.subtype === "usfm:w" ) break;
             }
             lastWordIndex.c--;
             if( lastWordIndex.c < 0 && lastWordIndex.b > 0 ){
@@ -929,7 +929,7 @@ export function replaceAlignmentsInPerfInPlace( perf: Perf, chapter: number, ver
             perf.sequences?.[perf.main_sequence_id ?? ""]?.blocks?.[lastWordIndex.b]?.content?.splice( lastWordIndex.c + 1, 0, newEndMilestone );
 
             //now if we are in the same block, inc our index.
-            if( lastWordIndex.b == contentIterator.b ) contentIterator.c++;
+            if( lastWordIndex.b === contentIterator.b ) contentIterator.c++;
         }
     };
 
@@ -941,27 +941,27 @@ export function replaceAlignmentsInPerfInPlace( perf: Perf, chapter: number, ver
     blockLoop: for( contentIterator.b = index.b; contentIterator.b < (perf.sequences?.[perf.main_sequence_id ?? ""]?.blocks?.length ?? 0); contentIterator.b++ ){
 
         const contentArray = perf.sequences?.[perf.main_sequence_id ?? ""]?.blocks?.[contentIterator.b]?.content ?? [];
-        for( contentIterator.c = ((contentIterator.b == index.b)?index.c:0); contentIterator.c < contentArray.length; contentIterator.c++ ){
+        for( contentIterator.c = ((contentIterator.b === index.b)?index.c:0); contentIterator.c < contentArray.length; contentIterator.c++ ){
             const content = contentArray[contentIterator.c];
 
-            if( typeof(content) == "object" && ("type" in content)) {
-                if( content.type == "mark"){
-                    if( ("subtype" in content) && content.subtype == "verses" ){
-                        if( parseInt(content?.atts?.number ?? '-1',10) != verse ) break blockLoop;  //once we hit the wrong verse we are done.
-                    }else if( ("subtype" in content) && content.subtype == "chapter" ){
-                        if( parseInt(content?.atts?.number ?? '-1',10) != chapter ) break blockLoop;  //once we hit the wrong chapter we are done.
+            if( typeof(content) === "object" && ("type" in content)) {
+                if( content.type === "mark"){
+                    if( ("subtype" in content) && content.subtype === "verses" ){
+                        if( parseInt(content?.atts?.number ?? '-1',10) !== verse ) break blockLoop;  //once we hit the wrong verse we are done.
+                    }else if( ("subtype" in content) && content.subtype === "chapter" ){
+                        if( parseInt(content?.atts?.number ?? '-1',10) !== chapter ) break blockLoop;  //once we hit the wrong chapter we are done.
                     }   
-                }else if( content.type == "start_milestone" && content.subtype == "usfm:zaln" ){
+                }else if( content.type === "start_milestone" && content.subtype === "usfm:zaln" ){
                     //remove the old alignment.
                     contentArray.splice( contentIterator.c, 1 );
                     contentIterator.c--; //decrement the index so that next loop we are on the next item.
-                }else if( content.type == "end_milestone" && content.subtype == "usfm:zaln" ){
+                }else if( content.type === "end_milestone" && content.subtype === "usfm:zaln" ){
                     //remove the old alignment.
                     contentArray.splice( contentIterator.c, 1 );
                     contentIterator.c--; //decrement the index so that next loop we are on the next item.
-                }else if( content.type == "wrapper" && content.subtype == "usfm:w" ){
+                }else if( content.type === "wrapper" && content.subtype === "usfm:w" ){
                     //test if this is an empty word.
-                    if( content.content?.join("").length == 0 ){
+                    if( content.content?.join("").length === 0 ){
                         //just drop it.
                         contentArray.splice( contentIterator.c, 1 );
                         contentIterator.c--; //decrement the index so that next loop we are on the next item.
@@ -970,7 +970,7 @@ export function replaceAlignmentsInPerfInPlace( perf: Perf, chapter: number, ver
 
 
                         //see if this is part of the current source map.  Otherwise close the current source map.
-                        if( currentSourceAlignmentHash != (hashNgramToString(relevantAlignment?.sourceNgram) ?? "") ){
+                        if( currentSourceAlignmentHash !== (hashNgramToString(relevantAlignment?.sourceNgram) ?? "") ){
                             closeSourceRange();
                             //add in the new alignment.
                             if( relevantAlignment ){
@@ -1000,12 +1000,12 @@ export function replaceAlignmentsInPerfInPlace( perf: Perf, chapter: number, ver
                         }
                     }
                 }
-            }else if( typeof(content) == "string" ){
+            }else if( typeof(content) === "string" ){
                 //if the string is zero length drop it.
-                if( content.length == 0 ){
+                if( content.length === 0 ){
                     contentArray.splice( contentIterator.c, 1 );
                     contentIterator.c--; //decrement the index so that next loop we are on the next item.
-                }else if( contentIterator.c > 0 && typeof(contentArray[contentIterator.c-1]) == "string" ){
+                }else if( contentIterator.c > 0 && typeof(contentArray[contentIterator.c-1]) === "string" ){
                     //we are a string right after a string.  If this is the case we will merge the two.
                     contentArray[contentIterator.c-1] += content;
                     contentArray.splice( contentIterator.c, 1 );
@@ -1057,16 +1057,16 @@ export function getReferencesFromPerf( perf: Perf ): TReference[] {
     let lastVerse = -1;
 
     for( const block of perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks ?? [] ){
-        if( block.type == 'paragraph' ){
+        if( block.type === 'paragraph' ){
             for( const content of (block.content ?? []) ){
-                if( typeof(content) == 'object' && content.type == 'mark' ){
-                    if( content.subtype == 'chapter' ){
+                if( typeof(content) === 'object' && content.type === 'mark' ){
+                    if( content.subtype === 'chapter' ){
                         currentChapter = parseInt(content?.atts?.number || "-1",10);
-                    }else if( content.subtype == 'verses' ){
+                    }else if( content.subtype === 'verses' ){
                         currentVerse = parseInt(content?.atts?.number || "-1",10);
                     }
                 }else{
-                    if( currentChapter != lastChapter || currentVerse != lastVerse ){
+                    if( currentChapter !== lastChapter || currentVerse !== lastVerse ){
                         result.push({ chapter: currentChapter, verse: currentVerse });
                         lastChapter = currentChapter;
                         lastVerse = currentVerse;
@@ -1103,18 +1103,18 @@ export function getIndexedReferencesFromPerf( perf: Perf ): PerfReferenceSet {
     const blocks = perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks ?? [];
     for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
         const block = blocks[blockIndex];
-        if (block.type == 'paragraph') {
+        if (block.type = 'paragraph') {
             const contents = block.content ?? [];
             for (let contentIndex = 0; contentIndex < contents.length; contentIndex++) {
                 const content = contents[contentIndex];
-                if( typeof(content) == 'object' && content.type == 'mark' ){
-                    if( content.subtype == 'chapter' ){
+                if( typeof(content) === 'object' && content.type === 'mark' ){
+                    if( content.subtype === 'chapter' ){
                         currentChapter = parseInt(content?.atts?.number || "-1",10);
 
                         chapters[currentChapter] = { 
                             b: blockIndex, c: contentIndex
                         };
-                    }else if( content.subtype == 'verses' ){
+                    }else if( content.subtype === 'verses' ){
                         currentVerse = parseInt(content?.atts?.number || "-1",10);
 
                         verses[`${currentChapter}:${currentVerse}`] = { 
@@ -1126,7 +1126,7 @@ export function getIndexedReferencesFromPerf( perf: Perf ): PerfReferenceSet {
                     last.c = contents.length-1;
                 }
 
-                if( first.b == -1 && currentChapter != -1 ){
+                if( first.b === -1 && currentChapter !== -1 ){
                     first.b = blockIndex;
                     first.c = contentIndex;
                 }
@@ -1179,12 +1179,12 @@ export function getAttributedVerseCharactersFromPerf( perf: Perf, reference: TRe
         const block = (perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks ?? [])[blockIndex];    
         if( block === undefined ) continue;
     
-        if( block.type == 'paragraph' ){
+        if( block.type === 'paragraph' ){
             //for( const [contentIndex, content] of (block.content ?? []).entries() ){
             for( let contentIndex = 0; contentIndex < (block.content ?? []).length; contentIndex++ ){
 
                 //if the location of the verse is supplied we don't have to go hunt for it. 
-                if( blockIndex == 0 && contentIndex == 0 && startIndex != undefined ){
+                if( blockIndex === 0 && contentIndex === 0 && startIndex !== undefined ){
                     [currentChapter, currentVerse] = [reference .chapter, reference .verse];
                     [blockIndex    , contentIndex] = [startIndex.b      , startIndex.c    ];
                     foundVerse = true;
@@ -1192,16 +1192,16 @@ export function getAttributedVerseCharactersFromPerf( perf: Perf, reference: TRe
 
                 const content = block.content?.[contentIndex];
                 if( content === undefined ) continue;
-                if( typeof( content ) == 'object' && content.type == 'mark' ){
-                    if( content.subtype == 'chapter' ){
+                if( typeof( content ) === 'object' && content.type === 'mark' ){
+                    if( content.subtype === 'chapter' ){
                         currentChapter = parseInt(content?.atts?.number || "-1",10);
-                    }else if( content.subtype == 'verses' ){
+                    }else if( content.subtype === 'verses' ){
                         currentVerse = parseInt(content?.atts?.number || "-1",10);
                     }
-                }else if( currentChapter == reference.chapter && currentVerse == reference.verse ){
+                }else if( currentChapter === reference.chapter && currentVerse === reference.verse ){
                     //if this is a quote section we add a space on the front for some reason.
                     //if( contentIndex == 0 && (block.subtype == "usfm:q" || block.subtype == "usfm:q2" || block.subtype == "usfm:m" )){
-                    if( contentIndex == 0 ){
+                    if( contentIndex === 0 ){
                         if( includeAttributes ){
                             (result as TAttributedString).push( {
                                 char: " ",
@@ -1220,15 +1220,15 @@ export function getAttributedVerseCharactersFromPerf( perf: Perf, reference: TRe
                     foundVerse = true;
 
                     let currentWord : string | undefined = undefined;
-                    if (typeof content == 'string') {
+                    if (typeof content === 'string') {
                         currentWord = content;
-                    }else if( content.type == "wrapper" && content.subtype == "usfm:w" ){
+                    }else if( content.type === "wrapper" && content.subtype === "usfm:w" ){
                         currentWord = content.content?.join( " " ) ?? "";
                     }
 
                     if( currentWord !== undefined ){
                         if( includeAttributes ){
-                            if( typeof content == "object" && content.type == "wrapper" && content.subtype == "usfm:w" ){
+                            if( typeof content === "object" && content.type === "wrapper" && content.subtype === "usfm:w" ){
                                 (result as TAttributedString).push( {
                                     char: "<",
                                     blockIndex,
@@ -1245,7 +1245,7 @@ export function getAttributedVerseCharactersFromPerf( perf: Perf, reference: TRe
                                     isMeta: false,
                                 });
                             }
-                            if( typeof content == "object" && content.type == "wrapper" && content.subtype == "usfm:w" ){
+                            if( typeof content === "object" && content.type === "wrapper" && content.subtype === "usfm:w" ){
                                 (result as TAttributedString).push( {
                                     char: ">",
                                     blockIndex,

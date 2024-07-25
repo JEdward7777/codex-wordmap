@@ -12,5 +12,12 @@
     "typescript.tsc.autoDetect": "off",
     "editor.wordWrap": "on",
     "editor.lineNumbers": "off",
-    "editor.cursorStyle": "line-thin"
+    "editor.cursorStyle": "line-thin",
+    "cSpell.words": [
+        "Algnments",
+        "atts",
+        "intraword",
+        "vref",
+        "vrefs"
+    ]
 }
