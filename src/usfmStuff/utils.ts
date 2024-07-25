@@ -880,8 +880,37 @@ export function replaceAlignmentsInPerfVerse( perfVerse: PerfVerse, newAlignment
     return result;
 }
 
-export function replaceAlignmentsInPerfInPlace( perf: Perf, chapter: number, verse: number, index: TBlockContentIndex, newAlignments: TSourceTargetAlignment[] ){
+export function replaceAlignmentsInPerfInPlace( perf: Perf, chapter: number, verse: number, newAlignments: TSourceTargetAlignment[], index?: TBlockContentIndex  ){
 
+    //if no index is given then we need to get it.
+    if (!index) {
+        let currentChapter = -1;
+        let currentVerse = -1;
+        for (let blockIndex = 0; !index && blockIndex < (perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks?.length ?? 0); blockIndex++) {
+            let block = perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks?.[blockIndex];
+            if (block !== undefined && block.type === 'paragraph') {
+                for (let contentIndex = 0; !index && contentIndex < (block?.content?.length ?? 0); contentIndex++) {
+                    let content = block?.content?.[contentIndex];
+                    if (content !== undefined) {
+                        if (typeof (content) === "object" && ("type" in content) && content.type === "mark") {
+                            if ("subtype" in content) { }
+                            if (content.subtype === "chapter") {
+                                currentChapter = parseInt(content.atts?.number ?? "-1");
+                            } else if (content.subtype === "verses") {
+                                currentVerse = parseInt(content.atts?.number ?? "-1");
+                            }
+                        }
+                    }
+                    if (currentChapter === chapter && currentVerse === verse) {
+                        index = { b: blockIndex, c: contentIndex };
+                    }
+                }
+            }
+        }
+    }
+    //if we still don't have an index then we can't do anything.
+    if (!index) return;
+    
     let currentSourceAlignmentHash = "";
     let currentSourceAlignmentLength = 0;
 

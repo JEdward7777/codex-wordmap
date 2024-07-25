@@ -1,7 +1,6 @@
 
 import * as vscode from "vscode";
 import { extractVerseRefFromLine } from "./utils/verseRefUtils";
-import { showWebview } from "./wordAlignWebview";
 import { doCodexWordMapping } from "./codexWordmapJunction";
 
 function extractLineFromNotebook(notebookDocument: vscode.NotebookDocument, verseRef: string): {cell: vscode.NotebookCell, line_number: number, line: string}|undefined {
@@ -76,7 +75,7 @@ export const registerCodeLenses = (context: vscode.ExtensionContext) => {
                 if (notebookDocument) {
                     const foundLine = extractLineFromNotebook(notebookDocument, verseRef);
                     if( foundLine ){
-                        await doCodexWordMapping( context, notebookDocument, foundLine.line, verseRef );
+                        await doCodexWordMapping( context, notebookDocument, verseRef );
                     }
                 }
             }

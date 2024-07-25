@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { getPerfFromActiveNotebook, readUsfmData } from "./usfmStuff/importUsfm";
-import { PRIMARY_WORD, Perf, SECONDARY_WORD, TSourceTargetAlignment, TWord, extractAlignmentsFromPerfVerse, extractWrappedWordsFromPerfVerse, pullVerseFromPerf, reindexPerfVerse, sortAndSupplementFromSourceWords } from "./usfmStuff/utils";
+import { PRIMARY_WORD, Perf, SECONDARY_WORD, TSourceTargetAlignment, TWord, extractAlignmentsFromPerfVerse, extractWrappedWordsFromPerfVerse, pullVerseFromPerf, reindexPerfVerse, replaceAlignmentsInPerfInPlace, sortAndSupplementFromSourceWords } from "./usfmStuff/utils";
 import { showWordAlignWebview } from "./wordAlignWebview";
 
 function getSourceUri( notebookDocument: vscode.NotebookDocument ) : string | undefined {
@@ -45,7 +45,15 @@ async function getAlignmentData( targetPerf: Perf, sourcePerf: Perf, reference: 
     return {wordBank: targetWords, alignments: supplementedAlignments, reference};
 }
 
-export async function doCodexWordMapping( context: vscode.ExtensionContext, notebookDocument: vscode.NotebookDocument, line: string, verseRef: string ) {
+/**
+ * Executes the codex word mapping functionality.
+ *
+ * @param {vscode.ExtensionContext} context - The extension context.
+ * @param {vscode.NotebookDocument} notebookDocument - The notebook document.
+ * @param {string} verseRef - The verse reference.
+ * @return {Promise<void>} A promise that resolves when the function completes.
+ */
+export async function doCodexWordMapping( context: vscode.ExtensionContext, notebookDocument: vscode.NotebookDocument, verseRef: string ) {
 
     //verify that the current document has a source file specified.
     const sourceMapping : string | undefined = getSourceUri( notebookDocument );
@@ -68,11 +76,21 @@ export async function doCodexWordMapping( context: vscode.ExtensionContext, note
     //call the webview to display the alignments.
     if( !alignmentInfo ) return;
     const modifiedAlignments : TSourceTargetAlignment[] | undefined = await showWordAlignWebview( context, alignmentInfo );
+    if( !modifiedAlignments ) return;
 
     //get the perf from the active document again in case it changed while the webview was open.
     targetPerf = await getPerfFromActiveNotebook( notebookDocument );
+    if( !targetPerf ) return;
 
     //take the alignments returned by the webview and update the perf.
+    //find the chapter and verse from the reference.
+    const [book, chapterVerseRef] = verseRef.split(" ");
+    const [chapterStr, verseStr] = chapterVerseRef.split(":");
+    if( !chapterStr || !verseStr ) return;
+    const chapter = parseInt( chapterStr );
+    const verse = parseInt( verseStr );
+
+    replaceAlignmentsInPerfInPlace( targetPerf, chapter, verse, modifiedAlignments );
 
     //modify the document with the new perf.
 }
