@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { getPerfFromActiveNotebook, readUsfmData, updatePerfOnNotebook } from "./usfmStuff/importUsfm";
-import { PRIMARY_WORD, Perf, SECONDARY_WORD, TSourceTargetAlignment, TWord, extractAlignmentsFromPerfVerse, extractWrappedWordsFromPerfVerse, pullVerseFromPerf, reindexPerfVerse, replaceAlignmentsInPerfInPlace, sortAndSupplementFromSourceWords } from "./usfmStuff/utils";
+import { PRIMARY_WORD, Perf, SECONDARY_WORD, TAlignmentPackage, TSourceTargetAlignment, TWord, extractAlignmentsFromPerfVerse, extractWrappedWordsFromPerfVerse, pullVerseFromPerf, reindexPerfVerse, replaceAlignmentsInPerfInPlace, sortAndSupplementFromSourceWords } from "./usfmStuff/utils";
 import { showWordAlignWebview } from "./wordAlignWebview";
 
 export function getSourceUri( notebookDocument: vscode.NotebookDocument ) : string | undefined {
@@ -63,7 +63,7 @@ export async function setSourceUri( notebook: vscode.NotebookDocument, sourceUri
     }
 }
 
-async function getAlignmentData( targetPerf: Perf, sourcePerf: Perf, reference: string ): Promise< {wordBank: TWord[], alignments: TSourceTargetAlignment[], reference: string} | undefined >{
+async function getAlignmentData( targetPerf: Perf, sourcePerf: Perf, reference: string ): Promise< TAlignmentPackage | undefined >{
     //Make the arguments are happy
     if( !reference ) return undefined;
     if( !targetPerf ) return undefined;

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { TSourceTargetAlignment, TWord } from './usfmStuff/utils';
+import { TAlignmentPackage, TSourceTargetAlignment, TWord } from './usfmStuff/utils';
 
-export function showWordAlignWebview( context: vscode.ExtensionContext, alignmentInfo: {wordBank: TWord[], alignments: TSourceTargetAlignment[], reference: string} ) : Promise<TSourceTargetAlignment[] | undefined> {
+export function showWordAlignWebview( context: vscode.ExtensionContext, alignmentInfo: TAlignmentPackage ) : Promise<TSourceTargetAlignment[] | undefined> {
 
     const wordAlignWebview = new WordAlignWebview( context, alignmentInfo );
 
@@ -17,7 +17,7 @@ class WordAlignWebview{
 	private _disposables: vscode.Disposable[] = [];
     private _panel?: vscode.WebviewPanel = undefined;
 
-    constructor( private _context: vscode.ExtensionContext, private alignmentInfo: {wordBank: TWord[], alignments: TSourceTargetAlignment[], reference: string} ) {} //private keyword declare and assign properties automatically
+    constructor( private _context: vscode.ExtensionContext, private alignmentInfo: TAlignmentPackage ) {} //private keyword declare and assign properties automatically
 
     public show() : Promise<TSourceTargetAlignment[] | undefined>  {
         this._panel = vscode.window.createWebviewPanel(

@@ -12,6 +12,13 @@ import { Alignment, Ngram, Prediction, Suggestion } from 'wordmap';
 import * as stringTokenizer from "string-punctuation-tokenizer";
 import { TAttributedString } from './customizedJLDiff';
 
+
+export interface TAlignmentPackage{
+    wordBank: TWord[], 
+    alignments: TSourceTargetAlignment[], 
+    reference: string
+}
+
 export interface TStrippedUsfm{
     version: number,
     text: string

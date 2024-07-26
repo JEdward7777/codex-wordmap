@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
-//@ts-ignore
+//@ts-expect-error This library doesn't have types.
 import { SuggestingWordAligner } from 'suggesting-word-aligner-rcl';
 
 import { PRIMARY_WORD, SECONDARY_WORD, TAlignmentSuggestion, TSourceTargetAlignment, 
     TWord, wordMapAlignmentToTSourceTargetAlignment, wordmapTokenToTWord, 
-    tAlignmentSuggestionToWordmapSuggestion, TWordAlignerAlignmentResult } from '../../../src/usfmStuff/utils';
+    tAlignmentSuggestionToWordmapSuggestion, TWordAlignerAlignmentResult, 
+    TAlignmentPackage} from '../../../src/usfmStuff/utils';
 
 //import css
 import './AlignmentDialogWrapper.css';
@@ -23,8 +24,8 @@ interface AlignmentDialogWrapperProps {
     reference: string;
     strippedUsfmVersion: number;
     alignmentDataVersion: number;
-    setAlignmentData: (alignmentData: any, reference: string) => Promise<VersionInfo>;
-    getAlignmentData: (reference: string) => Promise<any>;
+    setAlignmentData: (alignmentData: TSourceTargetAlignment[], reference: string) => Promise<VersionInfo>;
+    getAlignmentData: (reference: string) => Promise<TAlignmentPackage>;
     makeAlignmentSuggestions?:                (args:  {sourceSentence: TWord[], targetSentence: TWord[], maxSuggestions: number, manuallyAligned: TSourceTargetAlignment[]}) => Promise<TAlignmentSuggestion[]>;
 }
 
@@ -34,7 +35,7 @@ interface AlignmentDialogWrapperProps {
 // }
 
 interface AlignmentDialogWrapperState {
-    alignmentData?: any | undefined;
+    alignmentData?: TAlignmentPackage | undefined;
     strippedUsfmVersion?: number | undefined;
     alignmentDataVersion?: number | undefined;
 }   
@@ -67,7 +68,7 @@ const AlignmentDialogWrapper: React.FC<AlignmentDialogWrapperProps> = ({
 
 
     async function figureAlignmentData( strippedUsfmVersion: number, alignmentDataVersion: number, reference: string ) {
-        let alignmentData = await getAlignmentData(reference);
+        const alignmentData = await getAlignmentData(reference);
         console.log( "webview-ui: alignmentData: " + alignmentData );
         setState({alignmentData,
             strippedUsfmVersion,
