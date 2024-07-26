@@ -1,7 +1,7 @@
 
 import * as vscode from "vscode";
 import { extractVerseRefFromLine } from "./utils/verseRefUtils";
-import { doCodexWordMapping } from "./codexWordmapJunction";
+import { doCodexWordMapping, getSourceUri, setSourceUri } from "./codexWordmapJunction";
 
 function extractLineFromNotebook(notebookDocument: vscode.NotebookDocument, verseRef: string): {cell: vscode.NotebookCell, line_number: number, line: string}|undefined {
     //spin through the cells in the document and find the line that starts with verseRef.
@@ -16,6 +16,26 @@ function extractLineFromNotebook(notebookDocument: vscode.NotebookDocument, vers
         }
     }
     return undefined;
+}
+
+function getActiveCodexNotebook(): vscode.NotebookDocument | undefined {
+    const notebookDocument = vscode.window.activeNotebookEditor?.notebook;
+    if (!notebookDocument) {
+        //Pop up an error message
+        vscode.window.showErrorMessage("No active notebook.");
+        return undefined;
+    }
+
+    //Now verify that the current notebook is a codex file.
+    const uri = vscode.window.activeTextEditor?.document.uri;
+    const activeFileIsACodexFile = uri?.toString().includes(".codex");
+    if (!activeFileIsACodexFile) {
+        //Pop up an error message
+        vscode.window.showErrorMessage("Not a codex file.");
+        return undefined;
+    }
+
+    return notebookDocument;
 }
 
 class WordLensProvider implements vscode.CodeLensProvider {
@@ -63,10 +83,70 @@ export const registerCodeLenses = (context: vscode.ExtensionContext) => {
 
     context.subscriptions.push(
         vscode.commands.registerCommand(
+            'codex-wordmap.setSourceUri',
+            async () => {
+                //Get the active notebook
+                const activeCodexNotebook = getActiveCodexNotebook();
+                if (!activeCodexNotebook) return;
+                
+                //Now pop up a file open dialog which selects a usfm file.
+                const sourceUri = await vscode.window.showOpenDialog({
+                    canSelectFiles: true,
+                    canSelectFolders: false,
+                    canSelectMany: false,
+                    openLabel: 'Select USFM Source',
+                    title: 'Select USFM Source',
+                    defaultUri: vscode.Uri.file(activeCodexNotebook.uri.fsPath),
+                    filters: {
+                        'USFM': ['usfm','USFM','usf','USF']
+                    }
+                });
+                if (!sourceUri) return;
+
+                //Now set the source uri in the active notebook.
+                await setSourceUri( activeCodexNotebook, sourceUri[0].fsPath );
+            }
+        )
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand(
+            'codex-wordmap.getSourceUri',
+            async () => {
+                //Get the active notebook
+                const activeCodexNotebook = getActiveCodexNotebook();
+                if (!activeCodexNotebook) return;
+
+                //Now get the source uri in the active notebook.
+                const sourceUri = getSourceUri( activeCodexNotebook );
+
+                //now report the findings.
+                if( sourceUri ){
+                    //vscode.window.showInformationMessage( `The source language USFM is set to:\n${sourceUri}`);
+
+                    vscode.window.showInputBox({
+                        value: sourceUri,
+                        placeHolder: 'The source language USFM is set to:'
+                    }).then((newUri) => {
+                        if (newUri && newUri !== sourceUri) {
+                            // Handle the updated URI
+                            setSourceUri(activeCodexNotebook, newUri);
+                            vscode.window.showInformationMessage(`The source language USFM has been updated`);
+                        }
+                    });
+                }else{
+                    vscode.window.showInformationMessage( `The source language USFM is not set.`);
+                }
+            }
+        )
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand(
             'codex-wordmap.wordmap',
             async (verseRef: string, uri: string) => {
-                //Pop up a dialog showing the reference.
-                vscode.window.showInformationMessage(verseRef);
+                if( !verseRef || !uri ) return;
+
 
                 //get the document that is open from the uri.  This is a notebook.
                 //const document = vscode.workspace.textDocuments.find(doc => doc.uri.toString() === uri);

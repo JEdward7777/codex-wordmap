@@ -27,12 +27,20 @@
       {
         "title": "Import USFM",
         "shortTitle": "Import USFM",
-        "command": "codex-editor-extension.importUsfm"
+        "command": "codex-wordmap.importUsfm"
       },
       {
         "title": "Export USFM",
         "shortTitle": "Export USFM",
-        "command": "codex-editor-extension.exportUsfm"
+        "command": "codex-wordmap.exportUsfm"
+      },
+      {
+        "title": "Connect Source USFM",
+        "command": "codex-wordmap.setSourceUri"
+      },
+      {
+        "title": "View Connected Source USFM",
+        "command": "codex-wordmap.getSourceUri"
       }
     ]
   },

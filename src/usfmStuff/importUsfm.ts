@@ -127,7 +127,7 @@ function getUnupdatedPerfFromNotebookOrMakeIt( notebook: vscode.NotebookDocument
     return minimal_perf;
 }
 
-async function updatePerfOnNotebook(notebook: vscode.NotebookDocument, perf: Perf) {
+export async function updatePerfOnNotebook(notebook: vscode.NotebookDocument, perf: Perf) {
     let cellEdit: vscode.NotebookEdit | null = null;
 
     // Iterate over each cell to find the ones with existing metadata
@@ -796,7 +796,7 @@ function editVerse( perf: Perf, chapterNumber: number, verseNumber: number, newV
     reindexPerfVerse( perfVerse!, false );
 
     //now time to fix the alignments.
-    replaceAlignmentsInPerfInPlace( perf, chapterNumber, verseNumber, insertionIndex, savedAlignments );
+    replaceAlignmentsInPerfInPlace( perf, chapterNumber, verseNumber, savedAlignments, insertionIndex );
 
     //const testExport2 = getAttributedVerseCharactersFromPerf( perf, {chapter:chapterNumber, verse:verseNumber}, false, insertionIndex) as string;
 
@@ -865,7 +865,7 @@ async function doUsfmExport(codex_filename: string, exportParameters: UsfmExport
 }
 
 
-export async function readUsfmData( usfmFiles: vscode.Uri[] ) {
+export async function readUsfmData( usfmFiles: vscode.Uri[] ) : Promise<{ [filename: string]: Perf }> {
     //read them all in parallel
     const filenameToUsfmData: { [filename: string]: string} = Object.fromEntries(
         await Promise.all( 
@@ -1164,7 +1164,7 @@ export function registerUsfmImporter(context: vscode.ExtensionContext) {
     // The command has been defined in the package.json file
     // Now provide the implementation of the command with registerCommand
     // The commandId parameter must match the command field in package.json
-    const import_disposable = vscode.commands.registerCommand('codex-editor-extension.importUsfm', async () => {
+    const import_disposable = vscode.commands.registerCommand('codex-wordmap.importUsfm', async () => {
         // The code you place here will be executed every time your command is executed
         const importParameters = await getImportParameters();
 
@@ -1178,7 +1178,7 @@ export function registerUsfmImporter(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(import_disposable);
 
-    const export_disposable = vscode.commands.registerCommand('codex-editor-extension.exportUsfm', async () => {
+    const export_disposable = vscode.commands.registerCommand('codex-wordmap.exportUsfm', async () => {
         
         //vscode.window.showInformationMessage( "Usfm export not implemented" );
 

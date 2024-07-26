@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
-import { getPerfFromActiveNotebook, readUsfmData } from "./usfmStuff/importUsfm";
+import { getPerfFromActiveNotebook, readUsfmData, updatePerfOnNotebook } from "./usfmStuff/importUsfm";
 import { PRIMARY_WORD, Perf, SECONDARY_WORD, TSourceTargetAlignment, TWord, extractAlignmentsFromPerfVerse, extractWrappedWordsFromPerfVerse, pullVerseFromPerf, reindexPerfVerse, replaceAlignmentsInPerfInPlace, sortAndSupplementFromSourceWords } from "./usfmStuff/utils";
 import { showWordAlignWebview } from "./wordAlignWebview";
 
-function getSourceUri( notebookDocument: vscode.NotebookDocument ) : string | undefined {
+export function getSourceUri( notebookDocument: vscode.NotebookDocument ) : string | undefined {
     for( const cell of notebookDocument.getCells() ) {
         if (cell.kind === vscode.NotebookCellKind.Markup) {
             if( cell?.metadata?.wordmapSettings?.sourceMapping ) {
@@ -14,6 +14,55 @@ function getSourceUri( notebookDocument: vscode.NotebookDocument ) : string | un
     return undefined;
 }
 
+export async function setSourceUri( notebook: vscode.NotebookDocument, sourceUri: string ) {
+    let cellEdit: vscode.NotebookEdit | null = null;
+
+    // Iterate over each cell to find the ones with existing metadata
+    for (let i = 0; i < notebook.cellCount && cellEdit === null; i++) {
+        const cell = notebook.cellAt(i);
+        if (cell.kind === vscode.NotebookCellKind.Markup) {
+            if (cell.metadata?.perf) {
+                // Create a new metadata object with the updated setting
+                const newMetadata = {
+                    ...cell.metadata,
+                    wordmapSettings: {
+                        ...cell.metadata?.wordmapSettings,
+                        sourceMapping: sourceUri
+                    }
+                };
+
+                // Create a notebook edit to update the cell's metadata
+                cellEdit = vscode.NotebookEdit.updateCellMetadata(i, newMetadata);
+            }
+        }
+    }
+
+    // If we still didn't find the cell with existing metadata, go ahead and search through
+    // all the cells and find the first one which is referencing a chapter which should be Chapter 1.
+    for( let i = 0; i < notebook.cellCount && cellEdit === null; i++ ){
+        const cell = notebook.cellAt(i);
+        if( cell.kind === vscode.NotebookCellKind.Markup ){
+            //Test if the cell's contents starts with "# Chapter"
+            if( cell.document.getText().startsWith("# Chapter") ){ 
+                cellEdit = vscode.NotebookEdit.updateCellMetadata(i, {
+                    ...cell.metadata,
+                    wordmapSettings: {
+                        ...cell.metadata?.wordmapSettings,
+                        sourceMapping: sourceUri
+                    }
+                });
+            }
+        }
+    }
+
+    // Apply the edit to the notebook
+    if( cellEdit !== null ){
+        const edit = new vscode.WorkspaceEdit();
+        edit.set(notebook.uri, [cellEdit]);
+        await vscode.workspace.applyEdit(edit);
+    }
+}
+
 async function getAlignmentData( targetPerf: Perf, sourcePerf: Perf, reference: string ): Promise< {wordBank: TWord[], alignments: TSourceTargetAlignment[], reference: string} | undefined >{
     //Make the arguments are happy
     if( !reference ) return undefined;
@@ -22,7 +71,7 @@ async function getAlignmentData( targetPerf: Perf, sourcePerf: Perf, reference: 
 
     //convert the reference book, and chapter:verse.
     const [book, chapterVerseRef] = reference.split(" ");
-    //return if ":" is not in chatperVerse.
+    //return if ":" is not in chapterVerse.
     if( !chapterVerseRef.includes(":") ) return undefined;
 
 
@@ -59,15 +108,18 @@ export async function doCodexWordMapping( context: vscode.ExtensionContext, note
     const sourceMapping : string | undefined = getSourceUri( notebookDocument );
     if( !sourceMapping ) {
         //pop up an information message
-        vscode.window.showInformationMessage( "Please connect a source file using the 'Connect Source File' command." );
+        vscode.window.showInformationMessage( "Please connect a source file using the 'Connect Source USFM' command." );
         return;
     }
 
     //Get the perf from the active notebook.
     let targetPerf = await getPerfFromActiveNotebook( notebookDocument );
+    if( !targetPerf ) return;
 
     //get the perf for the source document.
-    const sourcePerf = Object.values(readUsfmData( [vscode.Uri.parse( sourceMapping )] ))[0];
+    const sourceUri = vscode.Uri.parse( sourceMapping );
+    const usfmDictionary = await readUsfmData( [sourceUri] );
+    const sourcePerf = Object.values(usfmDictionary)[0];
 
 
     //extract the alignments supplemented by the source document.
@@ -82,7 +134,6 @@ export async function doCodexWordMapping( context: vscode.ExtensionContext, note
     targetPerf = await getPerfFromActiveNotebook( notebookDocument );
     if( !targetPerf ) return;
 
-    //take the alignments returned by the webview and update the perf.
     //find the chapter and verse from the reference.
     const [book, chapterVerseRef] = verseRef.split(" ");
     const [chapterStr, verseStr] = chapterVerseRef.split(":");
@@ -90,7 +141,9 @@ export async function doCodexWordMapping( context: vscode.ExtensionContext, note
     const chapter = parseInt( chapterStr );
     const verse = parseInt( verseStr );
 
+    //take the alignments returned by the webview and update the perf.
     replaceAlignmentsInPerfInPlace( targetPerf, chapter, verse, modifiedAlignments );
 
     //modify the document with the new perf.
+    await updatePerfOnNotebook( notebookDocument, targetPerf );
 }
