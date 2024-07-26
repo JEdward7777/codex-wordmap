@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { TAlignmentPackage, TSourceTargetAlignment, TWord } from './usfmStuff/utils';
+import { CodexWordmapMessage, TAlignmentPackage, TSourceTargetAlignment, TWord } from './usfmStuff/utils';
 
 export function showWordAlignWebview( context: vscode.ExtensionContext, alignmentInfo: TAlignmentPackage ) : Promise<TSourceTargetAlignment[] | undefined> {
 
@@ -39,7 +39,7 @@ class WordAlignWebview{
 
         //Handle messages from the webview
         this._panel.webview.onDidReceiveMessage(
-            message => {
+            (message : CodexWordmapMessage) => {
                 switch (message.command) {
                     case 'return':
                         if( !this.returnCalled ) {
@@ -50,6 +50,22 @@ class WordAlignWebview{
                         break;
                     case 'close': 
                         this.dispose();
+                        break;
+                    case 'ready':
+                        //The react component is ready, give it the reference.
+                        const setReferenceMessage : CodexWordmapMessage = {
+                            command: "alignReference",
+                            content: this.alignmentInfo.reference
+                        };
+                        this._panel?.webview.postMessage(setReferenceMessage);
+                        break;
+                    case 'getAlignmentData':
+                        const getAlignmentResponseMessage : CodexWordmapMessage = {
+                            command: "response", 
+                            content: this.alignmentInfo,
+                            requestId: message.requestId
+                        };
+                        this._panel?.webview.postMessage(getAlignmentResponseMessage);
                         break;
                 }
             },

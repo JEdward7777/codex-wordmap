@@ -37,12 +37,10 @@ export interface InternalUsfmJsonFormat{
     alignmentData: TAlignmentData,
 }
 
-export interface UsfmMessage{
+export interface CodexWordmapMessage{
     command: string,
-    content?: OptionalInternalUsfmJsonFormat,
     requestId?: number,
-    commandArg?: any,
-    response?: any,
+    content?: any,
     error?: any,
   }
 
