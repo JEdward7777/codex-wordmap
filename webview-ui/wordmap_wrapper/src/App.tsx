@@ -1,33 +1,43 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import AlignmentDialogWrapper, { VersionInfo } from './AlignmentDialogWrapper'
 import './App.css'
 
+
+interface AppState{
+  alignmentReference: string,
+}
 function App() {
-  const [count, setCount] = useState(0)
+
+
+  const [appState, setAppState] = useState<AppState>({
+    alignmentReference: ""
+  })
+
+
+  const setAlignmentData = async ( newAlignments : any, reference: string ) : Promise<VersionInfo> => {
+
+    //STUB
+    
+    return { strippedUsfmVersion: 0, alignmentDataVersion: 0, reference };
+  }
+
+  const getAlignmentData = async ( reference: string ): Promise<any|undefined> => {
+    //return (await postMessageWithResponse( { command: 'getAlignmentData', content: getDocumentData(), commandArg: reference } )).response;
+
+    //STUB
+    return undefined;
+  }
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <AlignmentDialogWrapper 
+        reference={appState.alignmentReference} 
+        setAlignmentData={setAlignmentData}
+        getAlignmentData={getAlignmentData}
+        strippedUsfmVersion={0}
+        alignmentDataVersion={0}
+        makeAlignmentSuggestions={undefined}
+      />
     </>
   )
 }
