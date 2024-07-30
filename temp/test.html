@@ -1,66 +1,37 @@
-<!DOCTYPE html>
-<html style="height: 100%; width: 100%; margin: 0; padding: 0;">
-<head>
-  <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;  /*Prevent scroll on the HTML and body */
-    }
-    #root {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
-    #horizontal {
-      flex: 1;
-      display: flex;
-       overflow: hidden; /*Prevent scroll on the horizontal container */
-    }
-    #list, #contentArea {
-      flex: 1;
-      overflow-y: auto;
-    }
-    #buttons {
-      flex-shrink: 0; /* Ensure buttons don't shrink/shrink and stay at the bottom */
-      background-color: #f0f0f0; /* Optional: For visualization */
-    }
-  </style>
-</head>
-<body>
-  <div id="root">
-    <div id="horizontal">
-      <div id="list">
-        <div id="item1">list item1</div>
-        <div id="item2">list item2</div>
-        <div id="item3">list item3</div>
-        <div id="item4">list item4</div>
-        <div id="item5">list item5</div>
-        <div id="item6">list item6</div>
-        <div id="item7">list item7</div>
-        <div id="item8">list item8</div>
-        <div id="item9">list item9</div>
-        <div id="item10">list item10</div>
-      </div>
-      <div id="contentArea">
-        <div id="content">content</div>
-        <div id="content2">content2</div>
-        <div id="content3">content3</div>
-        <div id="content4">content4</div>
-        <div id="content5">content5</div>
-        <div id="content6">content6</div>
-        <div id="content7">content7</div>
-        <div id="content8">content8</div>
-        <div id="content9">content9</div>
-        <div id="content10">content10</div>
-        <div id="content11">content11</div>
-      </div>
+
+
+
+<html style="height: 100%; width: 100%; margin: 0; padding: 0;"
+>
+
+<body style="height: 100%; width: 100%; margin: 0; padding: 0;">
+
+    <div id="root" style="height: 100%; width: 100%; margin: 0; padding: 0; display:flex; flex-direction: column;">
+        <div id="horizontal" style="flex:1; display:flex; overflow: hidden;">
+            <div id="list" style="flex:1; overflow-y:auto">
+                <div id="item1">list item1</div>
+                <div id="item2">list item2</div>
+                <div id="item3">list item3</div>
+                <div id="item4">list item4</div>
+                <div id="item5">list item5</div>
+            </div>
+            <div id="contentArea" style="flex:1; overflow-y:auto">
+                <div id="content">content</div>
+                <div id="content2">content2</div>
+                <div id="content3">content3</div>
+                <div id="content4">content4</div>
+                <div id="content5">content5</div>
+                <div id="content6">content6</div>
+            </div>
+        </div>
+        <div id="buttons" style="flex:0">
+            <button id="button">Test</button>
+            <button id="button2">Test2</button>
+        </div>
+
     </div>
-    <div id="buttons">
-      <button id="button">Test</button>
-      <button id="button2">Test2</button>
-    </div>
-  </div>
+
+    
 </body>
+
 </html>
