@@ -27,3 +27,15 @@ named AlignmentDialogWrapper */
     background-color: white;
     width: 100%;
 }
+
+
+/* Cancel the margin around the buttons and content on the right side. */
+#AlignmentDialogWrapper > div > div:nth-child(2) {
+    margin: 0px !important;
+}
+
+/*The padding around the button area is causing it to scroll out of its area.*/
+#AlignmentDialogWrapper > div > div:nth-child(2) > div:nth-child(2) {
+    padding: 0px !important;
+}
+
