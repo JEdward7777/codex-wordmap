@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import AlignmentDialogWrapper, { VersionInfo } from './AlignmentDialogWrapper'
 import './App.css'
 import React from 'react';
-import { CodexWordmapMessage } from '../../../src/usfmStuff/utils';
+import { CodexWordmapMessage, TSourceTargetAlignment } from '../../../src/usfmStuff/utils';
 
 interface VsCodeStub{
   postMessage: (message: CodexWordmapMessage) => void
@@ -47,11 +47,11 @@ function App() {
     });
   }
 
+  const latestAlignmentsRef = React.useRef< TSourceTargetAlignment[] | undefined>(undefined);
 
+  const setAlignmentData = async ( newAlignments : TSourceTargetAlignment[], reference: string ) : Promise<VersionInfo> => {
 
-  const setAlignmentData = async ( newAlignments : any, reference: string ) : Promise<VersionInfo> => {
-
-    //STUB
+    latestAlignmentsRef.current = newAlignments;
     
     return { strippedUsfmVersion: 0, alignmentDataVersion: 0, reference };
   }
@@ -93,6 +93,20 @@ function App() {
   }, []); // Empty dependency array ensures this runs once after the component mounts
 
 
+  const handleCancel = () => {
+    const cancelMessage : CodexWordmapMessage = { command: 'close' };
+    vscodeRef.current?.postMessage( cancelMessage );
+  }
+
+  const handleAccept = () => {
+    if( latestAlignmentsRef.current !== undefined ){
+      const acceptMessage : CodexWordmapMessage = { command: 'return', content: latestAlignmentsRef.current };
+      vscodeRef.current?.postMessage( acceptMessage );
+    }else{
+      handleCancel();
+    }
+  }
+
   return (
     <>
       <AlignmentDialogWrapper 
@@ -103,6 +117,10 @@ function App() {
         alignmentDataVersion={0}
         makeAlignmentSuggestions={undefined}
       />
+      <div>
+        <button onClick={handleCancel}>CANCEL</button>
+        <button onClick={handleAccept}>ACCEPT</button>
+      </div>
     </>
   )
 }

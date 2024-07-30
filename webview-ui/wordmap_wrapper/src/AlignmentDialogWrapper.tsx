@@ -101,52 +101,12 @@ const AlignmentDialogWrapper: React.FC<AlignmentDialogWrapperProps> = ({
         return false;
     }
 
-    const alignmentInProcessRef = React.useRef(false);
-    const stashedAlignmentDataToProcess = React.useRef<TWordAlignerAlignmentResult | undefined>();
 
     const onAlignmentChangeWrapped = async (alignmentData: TWordAlignerAlignmentResult) => {
-
-        //if the alignment is currently in process, stash the alignment data
-        //otherwise process.
-        if( !alignmentInProcessRef.current ){
-            //mark that we are in process
-            alignmentInProcessRef.current = true;
-
-            //init with our own alignment data
-            let currentAlignmentData : TWordAlignerAlignmentResult | undefined = alignmentData;
-            //and keep looping while we pick up new alignments
-            while( currentAlignmentData !== undefined ){
-
-                console.log( "webview-ui: AlignmentData before sleep" ); 
-                //sleep to allow the foreground machinery priority.
-                await new Promise(r => setTimeout(r, 2000));
-                console.log( "webview-ui: AlignmentData after sleep"  ); 
-        
-                const newVersionRefs : VersionInfo = await setAlignmentData(currentAlignmentData.verseAlignments, reference);
-                //The max might be superfluous but it's good to be safe.
-                versionRefs.current.alignmentDataVersion = Math.max( versionRefs.current.alignmentDataVersion, newVersionRefs.alignmentDataVersion );
-                versionRefs.current.strippedUsfmVersion = Math.max( versionRefs.current.strippedUsfmVersion, newVersionRefs.strippedUsfmVersion );
-
-                //grab new alignment data which have been stashed if they exist.
-                currentAlignmentData = stashedAlignmentDataToProcess.current;
-                stashedAlignmentDataToProcess.current = undefined;
-
-                if( currentAlignmentData !== undefined ){
-                    console.log( "webview-ui: AlignmentData picked up stashed alignment" );
-                }
-            }
-
-            console.log( "webview-ui: AlignmentData done processing" );
-
-            //mark that we are done.
-            alignmentInProcessRef.current = false;
-        }else{
-            //stash the alignment data if we are in process
-            //overwriting any existing alignment already stashed.
-            console.log( "webview-ui: AlignmentData Stashing alignment data" );
-            stashedAlignmentDataToProcess.current = alignmentData;
-        }
-
+        const newVersionRefs : VersionInfo = await setAlignmentData(alignmentData.verseAlignments, reference);
+        //The max might be superfluous but it's good to be safe.
+        versionRefs.current.alignmentDataVersion = Math.max( versionRefs.current.alignmentDataVersion, newVersionRefs.alignmentDataVersion );
+        versionRefs.current.strippedUsfmVersion = Math.max( versionRefs.current.strippedUsfmVersion, newVersionRefs.strippedUsfmVersion );
     }
 
     const onAlignmentChange = (alignmentData: TWordAlignerAlignmentResult) => {

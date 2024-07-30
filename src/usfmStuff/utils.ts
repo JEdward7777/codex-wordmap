@@ -197,11 +197,7 @@ export interface TAlignmentSuggestion{
         chapters: {[key:string]:TUsfmChapter};
     }
 
-    export interface TWordAlignerAlignmentResult{
-        targetWords: TWord[];
-        verseAlignments: TSourceTargetAlignment[];
-    }
-      
+
 
     //I don't need this react interface declared on the server side of the project.
 
