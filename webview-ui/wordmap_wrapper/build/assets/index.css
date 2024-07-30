@@ -39,6 +39,27 @@ named AlignmentDialogWrapper */
     padding: 0px !important;
 }
 
+
+
+/*The following changes were added so that the area of the aligner could change
+with the area given to it.  Included with these changes are setting body, html and root to 100% height.
+and making root a flex box*/
+#wordList{
+    max-height: none !important; 
+}
+#AlignmentDialogWrapper {
+    overflow: hidden;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+#AlignmentDialogWrapper > div {
+    overflow: hidden;
+    flex: 1;
+}
+#AlignmentGrid{
+    max-height: none !important;
+}
 #root {
   height: 100%;
   width: 100%;
@@ -47,12 +68,20 @@ named AlignmentDialogWrapper */
 
 
   text-align: center;
+
+  display: flex;
+  flex-direction: column;
 }
 
 
 body {
   padding: 0;
   margin: 0;
+  height: 100%;
+}
+
+html {
+  height: 100%;
 }
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
