@@ -94,6 +94,34 @@ async function getAlignmentData( targetPerf: Perf, sourcePerf: Perf, reference: 
     return {wordBank: targetWords, alignments: supplementedAlignments, reference};
 }
 
+
+const usfmPerfCache = new Map<string, {perf:Perf, timestamp: number}>();
+async function cachedReadUsfmAsPerf( uri_string: string ): Promise<Perf | undefined> {
+    const uri = vscode.Uri.parse( uri_string );
+
+    //check if the file exists
+    const file_timestamp = await vscode.workspace.fs.stat( uri );
+    //if the file doesn't exist, return undefined
+    if( !file_timestamp ) return undefined;
+
+    //check if the file is in the cache
+    if( usfmPerfCache.has( uri_string ) ) {
+        //check if the file is newer than the cache
+        const { perf, timestamp } = usfmPerfCache.get( uri_string )!;
+        //if the file is newer than the cache, return the perf
+        if( file_timestamp.mtime <= timestamp ) return perf;
+    }
+
+    //if the file is not in the cache, read the file and return the perf
+    const perf = Object.values(await readUsfmData( [uri] ))[0];
+
+    //store the perf in the cache
+    usfmPerfCache.set( uri_string, { perf, timestamp: file_timestamp.mtime } );
+
+    //return the perf
+    return perf;
+}
+
 /**
  * Executes the codex word mapping functionality.
  *
@@ -117,9 +145,11 @@ export async function doCodexWordMapping( context: vscode.ExtensionContext, note
     if( !targetPerf ) return;
 
     //get the perf for the source document.
-    const sourceUri = vscode.Uri.parse( sourceMapping );
-    const usfmDictionary = await readUsfmData( [sourceUri] );
-    const sourcePerf = Object.values(usfmDictionary)[0];
+    // const sourceUri = vscode.Uri.parse( sourceMapping );
+    // const usfmDictionary = await readUsfmData( [sourceUri] );
+    // const sourcePerf = Object.values(usfmDictionary)[0];
+    const sourcePerf = await cachedReadUsfmAsPerf( sourceMapping );
+    if( !sourcePerf ) return;
 
 
     //extract the alignments supplemented by the source document.
