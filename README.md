@@ -45,18 +45,33 @@ This will also compile the sub-repository.
 
 ## Running the Extension
 
-1. Open this project in Visual Studio Code.
+### Debugging in Visual Studio Code
 
-2. Open a Codex project using the codex-editor plugin. Within the Codex project, open a Codex notebook.
-3. **Associate the Codex file with a source USFM file:**
+1. Open this project in Visual Studio Code.
+2. Press `F5` to start debugging. This will launch an instance of Visual Studio Code with the extension loaded.
+3. In the new instance of Visual Studio Code that opens, you can open or create a Codex project and use the extension for debugging purposes.
+
+### Side Loading the .vsix File
+
+1. After creating the `.vsix` file (as described above), open Visual Studio Code.
+2. Go to the Extensions view by clicking the Extensions icon in the Activity Bar on the side of the window or by pressing `Ctrl+Shift+X`.
+3. Click the three horizontal dots in the top right corner of the Extensions view.
+4. Select "Install from VSIX..." from the dropdown menu.
+5. Navigate to the location of the `.vsix` file you created and select it.
+6. The extension will be installed and ready to use.
+
+## Running a WordMap Alignment
+
+1. Open a Codex project using the codex-editor plugin. Within the Codex project, open a Codex notebook.
+2. **Associate the Codex file with a source USFM file:**
    - Press `Ctrl+Shift+P` and type "Connect Source USFM".
    - Select the USFM file for the specific book. This file might have been downloaded separately or might be in the resources folder downloaded by the Codex system.
    - Verify the connected USFM file using the command "View Connected Source USFM".
 
-4. Place the cursor within the verse you wish to run wordmap on.
-5. Click the wordmap wordlens which appears above the verse.
-6. Modify the alignment as desired.
-7. Select `Accept` to close the wordmap tab or `Cancel` to discard alignment changes.
+3. Place the cursor within the verse you wish to run wordmap on.
+4. Click the wordmap wordlens which appears above the verse.
+5. Modify the alignment as desired.
+6. Select `Accept` to close the wordmap tab or `Cancel` to discard alignment changes.
 
 ## Importing and Exporting USFM Files
 
@@ -73,7 +88,7 @@ This will also compile the sub-repository.
 
 ## Usage
 
-For a video demonstration on how to use the project, visit our [YouTube tutorial](https://youtu.be/jyfAQwSdZts).
+For a video demonstration on how to use the project, see this [YouTube tutorial](https://youtu.be/jyfAQwSdZts).
 
 ## License
 
