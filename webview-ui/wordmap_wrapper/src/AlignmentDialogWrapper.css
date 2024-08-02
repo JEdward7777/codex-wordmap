@@ -40,6 +40,15 @@ named AlignmentDialogWrapper */
 }
 
 
+/*Separate the buttons some*/
+#buttonDiv > * {
+    margin-right: 10px;
+}
+
+/* let the reference be written in black */
+#refSpan{
+    color: black;
+}
 
 /*The following changes were added so that the area of the aligner could change
 with the area given to it.  Included with these changes are setting body, html and root to 100% height.

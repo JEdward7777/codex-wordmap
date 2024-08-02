@@ -168,7 +168,6 @@ const AlignmentDialogWrapper: React.FC<AlignmentDialogWrapperProps> = ({
 
     return (
         <div id="AlignmentDialogWrapper">
-            <p>Alignment dialog wrapper {reference}</p>
             {Object.keys(state?.alignmentData || {}).length === 0 ? (
                 // Show loading message if alignments are an empty dictionary
                 <p>Loading...</p>

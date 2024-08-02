@@ -117,7 +117,8 @@ function App() {
         alignmentDataVersion={0}
         makeAlignmentSuggestions={undefined}
       />
-      <div>
+      <div id="buttonDiv">
+        <span id="refSpan">{appState.alignmentReference}</span>
         <button onClick={handleCancel}>CANCEL</button>
         <button onClick={handleAccept}>ACCEPT</button>
       </div>
