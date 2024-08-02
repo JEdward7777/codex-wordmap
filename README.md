@@ -1,7 +1,7 @@
 # _codex-wordmap_
 
 ## Description
-_codex-wordmap_ is a tool for mapping translated words of the Bible to the source Hebrew and Greek words.  This is a vscode plugin designed to operate along-side the [codex-editor](https://github.com/genesis-ai-dev/codex-editor) plugin.
+_codex-wordmap_ is a tool for mapping translated words of the Bible to the source Hebrew and Greek words. This is a Visual Studio Code plugin designed to operate alongside the [codex-editor](https://github.com/genesis-ai-dev/codex-editor) plugin.
 
 ## Prerequisites
 - Node.js (version 18.16.0 or higher)
@@ -48,15 +48,28 @@ This will also compile the sub-repository.
 1. Open this project in Visual Studio Code.
 
 2. Open a Codex project using the codex-editor plugin. Within the Codex project, open a Codex notebook.
-3. Associate the Codex file with a source USFM file:
+3. **Associate the Codex file with a source USFM file:**
    - Press `Ctrl+Shift+P` and type "Connect Source USFM".
    - Select the USFM file for the specific book. This file might have been downloaded separately or might be in the resources folder downloaded by the Codex system.
    - Verify the connected USFM file using the command "View Connected Source USFM".
 
-5. Place the cursor within the verse you wish to run wordmap on.
-6. Click the wordmap wordlens which appears above the verse.
-7. Modify the alignment as desired.
-8. Select `Accept` to close the wordmap tab or `Cancel` to discard alignment changes.
+4. Place the cursor within the verse you wish to run wordmap on.
+5. Click the wordmap wordlens which appears above the verse.
+6. Modify the alignment as desired.
+7. Select `Accept` to close the wordmap tab or `Cancel` to discard alignment changes.
+
+## Importing and Exporting USFM Files
+
+### Importing a USFM File
+1. With a Codex project opened in Visual Studio Code, press `Ctrl+Shift+P` and type "Import USFM".
+2. Select the USFM file to import.
+3. The related Codex file will appear under `files/target` in the current Codex project.
+
+### Exporting a USFM File
+1. Open the Codex file within the Codex project that you want to export.
+2. Press `Ctrl+Shift+P` and type "Export USFM".
+3. Identify where you want the exported USFM saved and press enter.
+4. The USFM file will be exported to the specified location.
 
 ## Usage
 
