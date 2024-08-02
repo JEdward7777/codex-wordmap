@@ -1,7 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { Perf, PerfContent, PerfMetadataDocument, PerfReferenceSet, PerfVerse, TBlockContentIndex, chopUpPerfIntoChaptersAndVerses, deepCopy, extractAlignmentsFromPerfVerse, getAttributedVerseCharactersFromPerf, getIndexedReferencesFromPerf, getReferencesFromPerf, perfToUsfm, pullVerseFromPerf, reindexPerfVerse, replaceAlignmentsInPerfInPlace, stringToPerfVerse, stripAttributedString, usfmToPerf } from './utils';
+import { Perf, PerfContent, PerfMetadataDocument, PerfReferenceSet, PerfVerse, TBlockContentIndex, chopUpPerfIntoChaptersAndVerses, deepCopy, extractAlignmentsFromPerfVerse, getAttributedVerseCharactersFromPerf, getIndexedReferencesFromPerf, getReferencesFromPerf, perfToUsfm, pullVerseFromPerf, reindexPerfVerse, replaceAlignmentsInPerfInPlace, stringRefToTReference, stringToPerfVerse, stripAttributedString, usfmToPerf } from './utils';
 import {CodexContentSerializer} from "../serializer";
 import {generateFiles} from "../utils/fileUtils";
 import { CellTypes } from '../utils/codexNotebookUtils';
@@ -424,14 +424,16 @@ function insertVerse( perf: Perf, chapterNumber: number, verseNumber: number, ve
     perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks?.[insertionIndex.b]?.content?.splice( insertionIndex.c, 0, ...newSection );
 }
 
-function editVerse( perf: Perf, chapterNumber: number, verseNumber: number, newVerseText: string, insertionIndex: TBlockContentIndex ){
-    //first see if the verse actually needs to be edited.
-    const testExport = importHacks( getAttributedVerseCharactersFromPerf( perf, {chapter:chapterNumber, verse:verseNumber}, false, insertionIndex) as string);
+function editVerse( perf: Perf, chapterNumber: number, verseNumber: number, newVerseText: string, insertionIndex: TBlockContentIndex, skipNoChangeTest: boolean = false ){
+    if( !skipNoChangeTest ){
+        //first see if the verse actually needs to be edited.
+        const testExport = importHacks( getAttributedVerseCharactersFromPerf( perf, {chapter:chapterNumber, verse:verseNumber}, false, insertionIndex) as string);
 
-    //A string comparison is cheaper then a diff, so
-    //we do this first off so that we don't do diffs on all the
-    //unmodified content.
-    if( testExport === newVerseText ) return;
+        //A string comparison is cheaper then a diff, so
+        //we do this first off so that we don't do diffs on all the
+        //unmodified content.
+        if( testExport === newVerseText ) return;
+    }
 
     //grab the alignment from the perf so we can fix the alignments back up after the edit.
     const savedAlignments = extractAlignmentsFromPerfVerse( pullVerseFromPerf( `${chapterNumber}:${verseNumber}`, perf, insertionIndex ) ?? [] );
@@ -838,8 +840,6 @@ export async function getPerfFromActiveNotebook( notebook?: vscode.NotebookDocum
         notebook = notebookEditor.notebook;
     }
 
-    //iterate through each cell in the notebook.
-
     const notebook_content = await collectScriptureDataFromNotebook(notebook);
 
     const perf = getUnupdatedPerfFromNotebookOrMakeIt(notebook);
@@ -852,6 +852,53 @@ export async function getPerfFromActiveNotebook( notebook?: vscode.NotebookDocum
 
     await updatePerfOnNotebook( notebook, perf );
 
+    return perf;
+}
+
+/**
+ * Retrieves a Perf object from a notebook document based on a single verse reference.
+ * This function is an optimized version of getPerfFromActiveNotebook can save time if
+ * the specifically referenced verse hasn't changed or can be updated without updating everything.
+ *
+ * @param {vscode.NotebookDocument} notebook - The notebook document to retrieve the Perf object from.
+ * @param {string} verseRef - The reference of the verse to retrieve.
+ * @return {Promise<Perf>} A Promise that resolves to the Perf object containing the verse reference.
+ */
+export async function getPerfFromNotebookSingleVerseOptimized( notebook: vscode.NotebookDocument, verseRef: string ) : Promise<Perf | undefined> {
+    const notebook_content = await collectScriptureDataFromNotebook(notebook);
+    const verseRefTRef = stringRefToTReference( verseRef );
+    if( !verseRefTRef ) return undefined;
+    const perfIndexVerseKey = `${verseRefTRef.chapter}:${verseRefTRef.verse}`;
+    const newVerseText = notebook_content[perfIndexVerseKey];
+    if( !newVerseText ) return undefined;
+    const perf = getUnupdatedPerfFromNotebookOrMakeIt(notebook);
+    const perf_index = getIndexedReferencesFromPerf(perf);
+
+    //if the current verse doesn't exist in the perf we need to 
+    //do a full perf update because we have to create the 
+    //chapters and verses in order.
+    //explicitly test if perfIndexVerseKey is in perf_index.verses
+    if( !perf_index.verses[perfIndexVerseKey] ){
+        //do full update action.
+        const notebook_edit_actions = combineIndexWithContentIntoActions(notebook_content, perf_index, true, perf);
+        executeNotebookEditActions( perf, notebook_edit_actions, perf_index );
+        await updatePerfOnNotebook( notebook, perf );
+        return perf;
+    }
+
+    //if we get this far, the verse exists in the perf.
+    //As the verse exists, test to see if it hasn't changed.  
+    //If not we don't have to update the perf on account of
+    //this verse.
+    const verseIndex = perf_index.verses[perfIndexVerseKey];
+    const currentVerseText = importHacks( getAttributedVerseCharactersFromPerf( perf, verseRefTRef, false, verseIndex) as string);
+    if( currentVerseText === newVerseText ) return perf;
+
+    //if we get this far, the verse exists but has changed.
+    // We will just update this one verse and not do a full 
+    //update of the whole perf.
+    editVerse( perf, verseRefTRef.chapter, verseRefTRef.verse, newVerseText, verseIndex, true );
+    await updatePerfOnNotebook( notebook, perf );
     return perf;
 }
 

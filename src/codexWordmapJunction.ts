@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { getPerfFromActiveNotebook, readUsfmData, updatePerfOnNotebook } from "./usfmStuff/importUsfm";
+import { getPerfFromActiveNotebook, getPerfFromNotebookSingleVerseOptimized, readUsfmData, updatePerfOnNotebook } from "./usfmStuff/importUsfm";
 import { PRIMARY_WORD, Perf, SECONDARY_WORD, TAlignmentPackage, TSourceTargetAlignment, TWord, extractAlignmentsFromPerfVerse, extractWrappedWordsFromPerfVerse, pullVerseFromPerf, reindexPerfVerse, replaceAlignmentsInPerfInPlace, sortAndSupplementFromSourceWords } from "./usfmStuff/utils";
 import { showWordAlignWebview } from "./wordAlignWebview";
 
@@ -113,7 +113,7 @@ export async function doCodexWordMapping( context: vscode.ExtensionContext, note
     }
 
     //Get the perf from the active notebook.
-    let targetPerf = await getPerfFromActiveNotebook( notebookDocument );
+    let targetPerf = await getPerfFromNotebookSingleVerseOptimized( notebookDocument, verseRef );
     if( !targetPerf ) return;
 
     //get the perf for the source document.

@@ -173,9 +173,26 @@ export interface TAlignmentSuggestion{
   
 */
     interface TReference{
+        book?: string;
         chapter: number;
         verse: number;
-    } /*
+    } 
+    
+    export function stringRefToTReference(stringRef: string): TReference|undefined{
+        //first test if a space is in the reference.  It might not have a book.
+        const [book, chapterVerseRef] = stringRef.includes(" ") ? stringRef.split(" ") : [undefined,stringRef];
+        const [chapterStr, verseStr] = chapterVerseRef.split(":");
+        if( !chapterStr || !verseStr ) return undefined;
+        const chapter = parseInt( chapterStr );
+        const verse = parseInt( verseStr );
+        if( book ){
+            return {book, chapter, verse};
+        }else{
+            return {chapter, verse};
+        }
+    }
+    
+    /*
 
     interface TContextId{
         reference: TReference;
