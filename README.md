@@ -1,5 +1,4 @@
-# Project Title
-_codex-wordmap_
+# _codex-wordmap_
 
 ## Description
 _codex-wordmap_ is a tool for mapping translated words of the Bible to the source Hebrew and Greek words.  This is a vscode plugin designed to operate along-side the [codex-editor](https://github.com/genesis-ai-dev/codex-editor) plugin.
@@ -46,16 +45,18 @@ This will also compile the sub-repository.
 
 ## Running the Extension
 
-1. Open the project in Visual Studio Code and run the extension.
-2. Associate the Codex file with a source USFM file:
+1. Open this project in Visual Studio Code.
+
+2. Open a Codex project using the codex-editor plugin. Within the Codex project, open a Codex notebook.
+3. Associate the Codex file with a source USFM file:
    - Press `Ctrl+Shift+P` and type "Connect Source USFM".
    - Select the USFM file for the specific book. This file might have been downloaded separately or might be in the resources folder downloaded by the Codex system.
    - Verify the connected USFM file using the command "View Connected Source USFM".
 
-3. Place the cursor within the verse you wish to run wordmap on.
-4. Click the wordmap wordlens which appears above the verse.
-5. Modify the alignment as desired.
-6. Select `Accept` to close the wordmap tab or `Cancel` to discard alignment changes.
+5. Place the cursor within the verse you wish to run wordmap on.
+6. Click the wordmap wordlens which appears above the verse.
+7. Modify the alignment as desired.
+8. Select `Accept` to close the wordmap tab or `Cancel` to discard alignment changes.
 
 ## Usage
 
