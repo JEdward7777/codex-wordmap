@@ -148,7 +148,13 @@ export async function doCodexWordMapping( context: vscode.ExtensionContext, note
     // const sourceUri = vscode.Uri.parse( sourceMapping );
     // const usfmDictionary = await readUsfmData( [sourceUri] );
     // const sourcePerf = Object.values(usfmDictionary)[0];
-    const sourcePerf = await cachedReadUsfmAsPerf( sourceMapping );
+    let sourcePerf : Perf | undefined = undefined;
+    try{
+        sourcePerf = await cachedReadUsfmAsPerf( sourceMapping );
+    }catch(e){
+       //rethrow this error with a better message
+        vscode.window.showErrorMessage( `Missing source. Please connect with 'Connect Source USFM' command.` ); 
+    }
     if( !sourcePerf ) return;
 
 
