@@ -99,8 +99,11 @@ export function traceDiffs( content1: TAttributedString, content2: TAttributedSt
 
     const backwardsList : LineCompIndex[] = [];
     let currentNode : LineCompIndex | null = thisLine[ thisLine.length-1 ];
-    while( currentNode != null ){
-        backwardsList.push( currentNode);
+    while( currentNode !== null ){
+        //Don't include the root root sentinel
+        if( currentNode.previous !== null ){
+            backwardsList.push( currentNode);   
+        }
         currentNode = currentNode.previous;
     }
 

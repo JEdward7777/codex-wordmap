@@ -1223,7 +1223,7 @@ export function getAttributedVerseCharactersFromPerf( perf: Perf, reference: TRe
 
     //for( const [blockIndex, block] of (perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks ?? []).entries() ){
     for( let blockIndex = 0; blockIndex < (perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks ?? []).length; blockIndex++ ){
-        const block = (perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks ?? [])[blockIndex];    
+        let block = (perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks ?? [])[blockIndex];    
         if( block === undefined ) continue;
     
         if( block.type === 'paragraph' ){
@@ -1234,6 +1234,7 @@ export function getAttributedVerseCharactersFromPerf( perf: Perf, reference: TRe
                 if( blockIndex === 0 && contentIndex === 0 && startIndex !== undefined ){
                     [currentChapter, currentVerse] = [reference .chapter, reference .verse];
                     [blockIndex    , contentIndex] = [startIndex.b      , startIndex.c    ];
+                    block = (perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks ?? [])[blockIndex];
                     foundVerse = true;
                 }
 
