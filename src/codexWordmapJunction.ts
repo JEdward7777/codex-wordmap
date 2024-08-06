@@ -161,7 +161,7 @@ export async function doCodexWordMapping( context: vscode.ExtensionContext, note
     if( !modifiedAlignments ) return;
 
     //get the perf from the active document again in case it changed while the webview was open.
-    targetPerf = await getPerfFromActiveNotebook( notebookDocument );
+    targetPerf = await getPerfFromNotebookSingleVerseOptimized( notebookDocument, verseRef );
     if( !targetPerf ) return;
 
     //find the chapter and verse from the reference.
