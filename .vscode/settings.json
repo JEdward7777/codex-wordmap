@@ -45,6 +45,7 @@
         "vals",
         "vref",
         "vrefs",
+        "wordlens",
         "zloirock"
     ]
 }

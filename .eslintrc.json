@@ -20,7 +20,8 @@
         "curly": ["warn", "multi-line"],
         "eqeqeq": "warn",
         "no-throw-literal": "warn",
-        "semi": "off"
+        "semi": "off",
+        "no-cond-assign": "error"
     },
     "ignorePatterns": [
         "out",

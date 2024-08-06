@@ -71,7 +71,7 @@ export function traceDiffs( content1: TAttributedString, content2: TAttributedSt
         for (const char2 of content2) {
             thisIndex = new LineCompIndex();
 
-            if( char2.char == char1.char && char2.isMeta == char1.isMeta ){
+            if( char2.char === char1.char && char2.isMeta === char1.isMeta ){
                 thisIndex.previous = lastLine[ columnIndex-1 ];
                 thisIndex.errorCount = thisIndex.previous.errorCount;
 

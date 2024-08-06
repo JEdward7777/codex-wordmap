@@ -96,7 +96,7 @@ async function getAlignmentData( targetPerf: Perf, sourcePerf: Perf, reference: 
 
 
 const usfmPerfCache = new Map<string, {perf:Perf, timestamp: number}>();
-async function cachedReadUsfmAsPerf( uri_string: string ): Promise<Perf | undefined> {
+export async function cachedReadUsfmAsPerf( uri_string: string ): Promise<Perf | undefined> {
     const uri = vscode.Uri.parse( uri_string );
 
     //check if the file exists

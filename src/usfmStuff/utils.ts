@@ -1150,7 +1150,7 @@ export function getIndexedReferencesFromPerf( perf: Perf ): PerfReferenceSet {
     const blocks = perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks ?? [];
     for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
         const block = blocks[blockIndex];
-        if (block.type = 'paragraph') {
+        if (block.type === 'paragraph') {
             const contents = block.content ?? [];
             for (let contentIndex = 0; contentIndex < contents.length; contentIndex++) {
                 const content = contents[contentIndex];
