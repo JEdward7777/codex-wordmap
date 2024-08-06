@@ -88,7 +88,7 @@ This will also compile the sub-repository.
 
 ## Usage
 
-For a video demonstration on how to use the project, see this [YouTube tutorial](https://youtu.be/jyfAQwSdZts).
+For a video demonstration on how to use the project, see this [YouTube tutorial](https://youtu.be/a50lTK3R8po).
 
 ## License
 
