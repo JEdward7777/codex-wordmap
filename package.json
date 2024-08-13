@@ -90,5 +90,8 @@
     "wordmap": "^0.6.0",
     "wordmap-lexer": "^0.3.6",
     "wordmapbooster": "^1.0.0"
-  }
+  },
+  "extensionDependencies": [
+    "project-accelerate.codex-editor-extension"
+  ]
 }
