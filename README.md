@@ -119,7 +119,7 @@ To modify the alignment training settings for _codex-wordmap_:
 
 ## Usage
 
-For a video demonstration on how to use the project, see this [YouTube tutorial](https://youtu.be/a50lTK3R8po).
+To familiarize yourself with the project, please refer to the following [YouTube video](https://youtu.be/a50lTK3R8po) tutorial. Additionally, you may find the following [video](https://youtu.be/Pr1H999OXNw) demonstrating the effective utilization of our AI-powered alignment suggestion feature helpful.
 
 ## License
 
