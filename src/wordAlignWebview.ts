@@ -155,7 +155,7 @@ class WordAlignWebview{
 
     async loadAlignmentModelForDocument(documentUri: vscode.Uri) : Promise<AbstractWordMapWrapper | undefined>{
         const getConfigurationFunction = async ( section: string ) : Promise<string> => {
-            return vscode.workspace?.getConfiguration("usfmEditor").get( section ) ?? "";
+            return vscode.workspace?.getConfiguration("codex-wordmap").get( section ) ?? "";
         };
         const getWorkSpaceFoldersFunction = async () => vscode.workspace.workspaceFolders;
 

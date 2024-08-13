@@ -191,7 +191,7 @@ let alignmentTrainerWorker: Worker | null = null;
 
 async function startAlignmentTrainer(){
     //Check if alignment training is enabled in the config
-    if( vscode.workspace.getConfiguration('usfmEditor').get('alignmentTraining.enabled', true) ){
+    if( vscode.workspace.getConfiguration('codex-wordmap').get('alignmentTraining.enabled', true) ){
  
 
         //Test if it's already running.
@@ -210,7 +210,7 @@ async function startAlignmentTrainer(){
                         alignmentTrainerWorker?.postMessage({
                             command: "respond",
                             requestId: message.requestId,
-                            content: vscode.workspace.getConfiguration('usfmEditor').get(message.content.key, message.content.defaultValue)
+                            content: vscode.workspace.getConfiguration('codex-wordmap').get(message.content.key, message.content.defaultValue)
                         });
                     }else if( message.command === "getOpenFiles" ){
                         const openNotebooks = vscode.workspace.notebookDocuments.filter( n => n.notebookType === 'codex-type' );

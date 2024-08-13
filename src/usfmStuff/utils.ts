@@ -1081,7 +1081,7 @@ export async function getSourceFolders( getConfiguration: (key: string) => Promi
     
     console.log( "requesting sourceFolders." );
 
-    //let sourceFolders : string[] | undefined = vscode.workspace?.getConfiguration("usfmEditor").get("sourceFolders" );
+    //let sourceFolders : string[] | undefined = vscode.workspace?.getConfiguration("codex-wordmap").get("sourceFolders" );
     let sourceFolders : string[] | undefined = await getConfiguration( "sourceFolders" );
     
     //if sourceFolders is undefined, then get the default.
