@@ -77,8 +77,9 @@ This will also compile the sub-repository.
 
 ### Importing a USFM File
 1. With a Codex project opened in Visual Studio Code, press `Ctrl+Shift+P` and type "Import USFM".
-2. Select the USFM file to import.
-3. The related Codex file will appear under `files/target` in the current Codex project.
+2. **Note:** The USFM files must be in the ORG versification format. If they are not, the AI tools will not be coherent as verse references will be mismatched.
+3. Select the USFM file to import.
+4. The related Codex file will appear under `files/target` in the current Codex project.
 
 ### Exporting a USFM File
 1. Open the Codex file within the Codex project that you want to export.
@@ -95,19 +96,17 @@ _codex-wordmap_ includes the following configurable settings related to alignmen
    - This setting enables or disables the background training of the alignment suggestion model. If enabled, every time the Codex notebook is saved, the model will retrain in a background thread. This model is used in the wordmap webview to provide alignment suggestions.
 
 2. **codex-wordmap.alignmentTraining.bookGroups**
-   - This is a list of book Codex files that should be grouped together when training the alignment AI. Due to the different languages, Old Testament (OT) and New Testament (NT) should be separate groups. Each Codex file should be on its own line, and separate groups should be separated with an empty line. Any file that doesn't match a group will be assumed to be in its own group.  The path is relative to the files/target project folder and the .codex extension is optional.
+   - This is a list of book Codex files that should be grouped together when training the alignment AI. Due to the different languages, Old Testament (OT) and New Testament (NT) should be separate groups. Each Codex file should be on its own line, and separate groups should be separated with an empty line. Any file that doesn't match a group will be assumed to be in its own group.  The path is relative to the files/target project folder and the .codex extension is optional.  The AI model can be overwhelmed by too many books grouped together, so it is best to only group smaller books.
 
-### Example of Configuration
+### Example bookGroups Configuration
 ```
 # Group for Old Testament
-Genesis
 Exodus
 Leviticus
 
 # Group for New Testament
-Matthew
-Mark
-Luke
+TITUS
+GALATIANS
 ```
 
 ### Activating User Settings
