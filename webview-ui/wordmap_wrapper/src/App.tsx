@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import AlignmentDialogWrapper, { VersionInfo } from './AlignmentDialogWrapper'
 import './App.css'
 import React from 'react';
-import { CodexWordmapMessage, TSourceTargetAlignment } from '../../../src/usfmStuff/utils';
+import { CodexWordmapMessage, TAlignmentSuggestion, TSourceTargetAlignment, TWord } from '../../../src/usfmStuff/utils';
 
 interface VsCodeStub{
   postMessage: (message: CodexWordmapMessage) => void
@@ -107,6 +107,12 @@ function App() {
     }
   }
 
+
+
+  const makeAlignmentSuggestions = async ( args:  {sourceSentence: TWord[], targetSentence: TWord[], maxSuggestions: number, manuallyAligned: TSourceTargetAlignment[]}) : Promise<TAlignmentSuggestion[]> => {
+    return (await postMessageWithResponse( { command: 'makeAlignmentSuggestions', content: args } )).content;
+  }
+
   return (
     <>
       <AlignmentDialogWrapper 
@@ -115,7 +121,7 @@ function App() {
         getAlignmentData={getAlignmentData}
         strippedUsfmVersion={0}
         alignmentDataVersion={0}
-        makeAlignmentSuggestions={undefined}
+        makeAlignmentSuggestions={makeAlignmentSuggestions}
       />
       <div id="buttonDiv">
         <span id="refSpan">{appState.alignmentReference}</span>

@@ -75,6 +75,7 @@
     "proskomma-core": "^0.10.9",
     "proskomma-json-tools": "^0.8.16",
     "wordmap": "^0.6.0",
-    "wordmap-lexer": "^0.3.6"
+    "wordmap-lexer": "^0.3.6",
+    "wordmapbooster": "^1.0.0"
   }
 }

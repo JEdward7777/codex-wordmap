@@ -2,6 +2,9 @@ import * as vscode from "vscode";
 import { getPerfFromActiveNotebook, getPerfFromNotebookSingleVerseOptimized, readUsfmData, updatePerfOnNotebook } from "./usfmStuff/importUsfm";
 import { PRIMARY_WORD, Perf, SECONDARY_WORD, TAlignmentPackage, TSourceTargetAlignment, TWord, extractAlignmentsFromPerfVerse, extractWrappedWordsFromPerfVerse, pullVerseFromPerf, reindexPerfVerse, replaceAlignmentsInPerfInPlace, sortAndSupplementFromSourceWords } from "./usfmStuff/utils";
 import { showWordAlignWebview } from "./wordAlignWebview";
+import { Worker } from 'node:worker_threads';
+import { WorkerMessage } from './workers/alignmentTrainerTypes';
+import * as path from 'path';
 
 export function getSourceUri( notebookDocument: vscode.NotebookDocument ) : string | undefined {
     for( const cell of notebookDocument.getCells() ) {
@@ -163,7 +166,7 @@ export async function doCodexWordMapping( context: vscode.ExtensionContext, note
 
     //call the webview to display the alignments.
     if( !alignmentInfo ) return;
-    const modifiedAlignments : TSourceTargetAlignment[] | undefined = await showWordAlignWebview( context, alignmentInfo );
+    const modifiedAlignments : TSourceTargetAlignment[] | undefined = await showWordAlignWebview( context, alignmentInfo, notebookDocument.uri );
     if( !modifiedAlignments ) return;
 
     //get the perf from the active document again in case it changed while the webview was open.
@@ -182,4 +185,84 @@ export async function doCodexWordMapping( context: vscode.ExtensionContext, note
 
     //modify the document with the new perf.
     await updatePerfOnNotebook( notebookDocument, targetPerf );
+}
+
+let alignmentTrainerWorker: Worker | null = null;
+
+async function startAlignmentTrainer(){
+    //Check if alignment training is enabled in the config
+    if( vscode.workspace.getConfiguration('usfmEditor').get('alignmentTraining.enabled', true) ){
+ 
+
+        //Test if it's already running.
+        if( alignmentTrainerWorker === null ){
+            console.log( "starting alignment trainer worker" );
+            alignmentTrainerWorker = new Worker(path.join(__dirname, "./alignmentTrainerWorker.js"));
+
+            alignmentTrainerWorker.on('exit', (code) => {
+                console.log( "alignment trainer worker exited with code " + code );
+                alignmentTrainerWorker = null;
+            });
+
+            alignmentTrainerWorker.on('message', async (message: WorkerMessage) => {
+                try{
+                    if( message.command === "getConfiguration" ){
+                        alignmentTrainerWorker?.postMessage({
+                            command: "respond",
+                            requestId: message.requestId,
+                            content: vscode.workspace.getConfiguration('usfmEditor').get(message.content.key, message.content.defaultValue)
+                        });
+                    }else if( message.command === "getOpenFiles" ){
+                        const openNotebooks = vscode.workspace.notebookDocuments.filter( n => n.notebookType === 'codex-type' );
+                        const openFiles = openNotebooks.map( n => n.uri.fsPath );
+                        alignmentTrainerWorker?.postMessage({
+                            command: "respond",
+                            requestId: message.requestId,
+                            content: openFiles
+                        });
+                    }else if( message.command === "getWorkspaceFolders" ){
+                        alignmentTrainerWorker?.postMessage({
+                            command: "respond",
+                            requestId: message.requestId,
+                            content: vscode.workspace.workspaceFolders
+                        });
+                    }else if( message.command === "getFileStat" ){
+                        const stat = await vscode.workspace.fs.stat( vscode.Uri.parse( message.content.filePath ) );
+                        alignmentTrainerWorker?.postMessage({
+                            command: "respond",
+                            requestId: message.requestId,
+                            content: stat
+                        });
+                    }
+                }catch ( e ){
+                    if( message.requestId ){
+                        alignmentTrainerWorker?.postMessage({
+                            command: "respond",
+                            requestId: message.requestId,
+                            content: null,
+                            error: e
+                        });
+                    }
+                }
+            });
+        }else{
+            console.log( "alignment trainer worker already running" );
+        }
+
+    }else{
+        console.log( "alignment training not enabled" );
+    }
+}
+
+export function registerCodexOnSaveHook( context: vscode.ExtensionContext ) {
+    context.subscriptions.push(vscode.workspace.onDidSaveNotebookDocument((e) => {
+		if( e.notebookType === 'codex-type' ){
+
+            //sleep for a second to allow the save to finish
+            setTimeout(async () => {
+
+                 startAlignmentTrainer();
+            }, 1000);
+		}
+	}));
 }

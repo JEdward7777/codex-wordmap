@@ -1,6 +1,6 @@
 
 import * as vscode from "vscode";
-import { extractVerseRefFromLine } from "./utils/verseRefUtils";
+import { extractVerseRefFromLine } from "./codexUtils/verseRefUtils";
 import { doCodexWordMapping, getSourceUri, setSourceUri } from "./codexWordmapJunction";
 
 function extractLineFromNotebook(notebookDocument: vscode.NotebookDocument, verseRef: string): {cell: vscode.NotebookCell, line_number: number, line: string}|undefined {

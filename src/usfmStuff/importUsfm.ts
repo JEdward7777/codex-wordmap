@@ -3,11 +3,11 @@
 import * as vscode from 'vscode';
 import { Perf, PerfContent, PerfMetadataDocument, PerfReferenceSet, PerfVerse, TBlockContentIndex, chopUpPerfIntoChaptersAndVerses, deepCopy, extractAlignmentsFromPerfVerse, getAttributedVerseCharactersFromPerf, getIndexedReferencesFromPerf, getReferencesFromPerf, perfToUsfm, pullVerseFromPerf, reindexPerfVerse, replaceAlignmentsInPerfInPlace, stringRefToTReference, stringToPerfVerse, stripAttributedString, usfmToPerf } from './utils';
 import {CodexContentSerializer} from "../serializer";
-import {generateFiles} from "../utils/fileUtils";
-import { CellTypes } from '../utils/codexNotebookUtils';
+import {generateFiles} from "../codexUtils/fileUtils";
+import { CellTypes } from '../codexUtils/codexNotebookUtils';
 import path from 'path';
 import { DiffState, TAttributedString, traceDiffs } from './customizedJLDiff';
-import { getWorkSpaceFolder } from '../utils';
+import { getWorkSpaceFolder } from '../codexUtils';
 
 type UsfmImportParameters = {
     usfmFiles: vscode.Uri[];

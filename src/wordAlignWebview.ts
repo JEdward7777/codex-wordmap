@@ -1,9 +1,13 @@
 import * as vscode from 'vscode';
-import { CodexWordmapMessage, TAlignmentPackage, TSourceTargetAlignment, TWord } from './usfmStuff/utils';
+import { CodexWordmapMessage, TAlignmentPackage, TAlignmentSuggestion, TSourceTargetAlignment, TWord, tSourceTargetAlignmentToWordmapAlignment, tWordToWordmapToken, wordmapSuggestionToTAlignmentSuggestion } from './usfmStuff/utils';
+import { AbstractWordMapWrapper } from 'wordmapbooster/dist/boostwordmap_tools';
+import { bookGroupToModelName, filenameToBookGroup, loadAlignmentModel } from './usfmStuff/utilsWithFs';
+import * as fs from 'fs';
+import { updateTokenLocations } from 'wordmapbooster/dist/wordmap_tools';
 
-export function showWordAlignWebview( context: vscode.ExtensionContext, alignmentInfo: TAlignmentPackage ) : Promise<TSourceTargetAlignment[] | undefined> {
+export function showWordAlignWebview( context: vscode.ExtensionContext, alignmentInfo: TAlignmentPackage, document_uri: vscode.Uri ) : Promise<TSourceTargetAlignment[] | undefined> {
 
-    const wordAlignWebview = new WordAlignWebview( context, alignmentInfo );
+    const wordAlignWebview = new WordAlignWebview( context, alignmentInfo, document_uri );
 
     return wordAlignWebview.show();
 };
@@ -17,7 +21,7 @@ class WordAlignWebview{
 	private _disposables: vscode.Disposable[] = [];
     private _panel?: vscode.WebviewPanel = undefined;
 
-    constructor( private _context: vscode.ExtensionContext, private alignmentInfo: TAlignmentPackage ) {} //private keyword declare and assign properties automatically
+    constructor( private _context: vscode.ExtensionContext, private alignmentInfo: TAlignmentPackage, private document_uri: vscode.Uri ) {} //private keyword declare and assign properties automatically
 
     public show() : Promise<TSourceTargetAlignment[] | undefined>  {
         this._panel = vscode.window.createWebviewPanel(
@@ -66,6 +70,24 @@ class WordAlignWebview{
                             requestId: message.requestId
                         };
                         this._panel?.webview.postMessage(getAlignmentResponseMessage);
+                        break;
+
+                    case 'makeAlignmentSuggestions':
+                        this.makeAlignmentSuggestions( { documentUri: this.document_uri, ...message.content! }  ).then( result => {
+                            const response : CodexWordmapMessage = {
+                                command: "response",
+                                requestId: message.requestId,
+                                content: result,
+                            };
+                            this._panel?.webview.postMessage(response);
+                        }).catch( error => {
+                            const response : CodexWordmapMessage = {
+                                command: "response",
+                                requestId: message.requestId,
+                                error,
+                            };
+                            this._panel?.webview.postMessage(response);
+                        });
                         break;
                 }
             },
@@ -121,5 +143,94 @@ class WordAlignWebview{
           </body>
         </html>
         `;
+    }
+
+    
+    private loaded_alignment_models: { [model_name: string]: { 
+        model: any, 
+        file_modification_time: number } 
+    } = {};
+
+    private loaded_alignment_model_unload_timers: { [model_name: string]: NodeJS.Timeout } = {};
+
+    async loadAlignmentModelForDocument(documentUri: vscode.Uri) : Promise<AbstractWordMapWrapper | undefined>{
+        const getConfigurationFunction = async ( section: string ) : Promise<string> => {
+            return vscode.workspace?.getConfiguration("usfmEditor").get( section ) ?? "";
+        };
+        const getWorkSpaceFoldersFunction = async () => vscode.workspace.workspaceFolders;
+
+
+        const getCurrentFile = async () => {
+            return [documentUri.fsPath];
+        };
+
+        //first figure out what the filename is for this document
+        const bookGroup = await filenameToBookGroup( documentUri.fsPath,  getConfigurationFunction,
+            getWorkSpaceFoldersFunction, getCurrentFile );
+        if( bookGroup === undefined ) return undefined;
+        
+        const modelPath = bookGroupToModelName( bookGroup );
+        if( modelPath === undefined ) return undefined;
+
+        //see if model_name is loaded in load_alignment_models.
+
+        if( !(modelPath in this.loaded_alignment_models)){
+            const result = await loadAlignmentModel( modelPath );
+            if ( result === undefined ) return undefined;
+            if ( result.model === undefined ) return undefined;
+            this.loaded_alignment_models[modelPath] = result;
+        }
+
+        const {model, file_modification_time} : {model: AbstractWordMapWrapper, file_modification_time: number} = this.loaded_alignment_models[modelPath];
+
+
+        //make it so that if a model is not used for 5 minutes it is unloaded
+        const modelTimeoutMs = 1000 * 60 * 5;
+        //reset the timer and set it again.
+        if( modelPath in this.loaded_alignment_model_unload_timers ){
+            clearTimeout( this.loaded_alignment_model_unload_timers[modelPath] );
+        }
+        this.loaded_alignment_model_unload_timers[modelPath] = setTimeout( () => {
+            delete this.loaded_alignment_models[modelPath];
+            delete this.loaded_alignment_model_unload_timers[modelPath];
+        }, modelTimeoutMs );
+
+
+        //now return a promise that returns the model and after the model has
+        //been returns checks if the modification time of the file is actually later.
+        return new Promise<AbstractWordMapWrapper>( async (resolve, reject) => {
+            //first resolve the result and then check if we need to reload
+            resolve( model );
+
+            const stat = await fs.promises.stat( modelPath );
+            const current_modification_time = stat.mtimeMs;
+            if( current_modification_time > file_modification_time ){
+                this.loaded_alignment_models[modelPath] = await loadAlignmentModel( modelPath );
+            }            
+        } );
+    }
+
+    async makeAlignmentSuggestions(
+        {documentUri,             sourceSentence,          targetSentence,          maxSuggestions,         manuallyAligned} : 
+        {documentUri: vscode.Uri, sourceSentence: TWord[], targetSentence: TWord[], maxSuggestions: number, manuallyAligned: TSourceTargetAlignment[]}) : Promise<TAlignmentSuggestion[]>{
+
+        const model = await this.loadAlignmentModelForDocument( documentUri );
+        if( model === undefined ) return [];
+        
+        //convert all the things over from TWord stuffs to wordmap stuffs.
+        const sourceSentenceWordMap = sourceSentence.map( tWordToWordmapToken );
+        const targetSentenceWordMap = targetSentence.map( tWordToWordmapToken );
+        updateTokenLocations( sourceSentenceWordMap );
+        updateTokenLocations( targetSentenceWordMap );
+        const manuallyAlignedWordMap = manuallyAligned.map( tSourceTargetAlignmentToWordmapAlignment );
+
+        console.log( "making alignment suggestions" );
+        
+        const suggestions = model.predict( sourceSentenceWordMap, targetSentenceWordMap, maxSuggestions, manuallyAlignedWordMap );
+        console.log( "made alignment suggestions" );
+        console.log( suggestions );
+
+        const convertedSuggestions = suggestions.map( wordmapSuggestionToTAlignmentSuggestion );
+        return convertedSuggestions;
     }
 };
