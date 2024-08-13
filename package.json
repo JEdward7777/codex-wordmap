@@ -17,10 +17,6 @@
   "contributes": {
     "commands": [
       {
-        "command": "codex-wordmap.helloWorld",
-        "title": "Hello World"
-      },
-      {
         "command": "codex-wordmap.wordmap",
         "title": "Run Wordmap"
       },
