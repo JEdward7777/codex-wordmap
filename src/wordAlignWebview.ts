@@ -142,12 +142,12 @@ class WordAlignWebview{
     }
 
     
-    private loaded_alignment_models: { [model_name: string]: { 
+    private static loaded_alignment_models: { [model_name: string]: { 
         model: any, 
         file_modification_time: number } 
     } = {};
 
-    private loaded_alignment_model_unload_timers: { [model_name: string]: NodeJS.Timeout } = {};
+    private static loaded_alignment_model_unload_timers: { [model_name: string]: NodeJS.Timeout } = {};
 
     async loadAlignmentModelForDocument(documentUri: vscode.Uri) : Promise<AbstractWordMapWrapper | undefined>{
         const getConfigurationFunction = async ( section: string ) : Promise<string> => {
@@ -170,25 +170,25 @@ class WordAlignWebview{
 
         //see if model_name is loaded in load_alignment_models.
 
-        if( !(modelPath in this.loaded_alignment_models)){
+        if( !(modelPath in WordAlignWebview.loaded_alignment_models)){
             const result = await loadAlignmentModel( modelPath );
             if ( result === undefined ) return undefined;
             if ( result.model === undefined ) return undefined;
-            this.loaded_alignment_models[modelPath] = result;
+            WordAlignWebview.loaded_alignment_models[modelPath] = result;
         }
 
-        const {model, file_modification_time} : {model: AbstractWordMapWrapper, file_modification_time: number} = this.loaded_alignment_models[modelPath];
+        const {model, file_modification_time} : {model: AbstractWordMapWrapper, file_modification_time: number} = WordAlignWebview.loaded_alignment_models[modelPath];
 
 
         //make it so that if a model is not used for 5 minutes it is unloaded
         const modelTimeoutMs = 1000 * 60 * 5;
         //reset the timer and set it again.
-        if( modelPath in this.loaded_alignment_model_unload_timers ){
-            clearTimeout( this.loaded_alignment_model_unload_timers[modelPath] );
+        if( modelPath in WordAlignWebview.loaded_alignment_model_unload_timers ){
+            clearTimeout( WordAlignWebview.loaded_alignment_model_unload_timers[modelPath] );
         }
-        this.loaded_alignment_model_unload_timers[modelPath] = setTimeout( () => {
-            delete this.loaded_alignment_models[modelPath];
-            delete this.loaded_alignment_model_unload_timers[modelPath];
+        WordAlignWebview.loaded_alignment_model_unload_timers[modelPath] = setTimeout( () => {
+            delete WordAlignWebview.loaded_alignment_models[modelPath];
+            delete WordAlignWebview.loaded_alignment_model_unload_timers[modelPath];
         }, modelTimeoutMs );
 
 
@@ -201,7 +201,7 @@ class WordAlignWebview{
             const stat = await fs.promises.stat( modelPath );
             const current_modification_time = stat.mtimeMs;
             if( current_modification_time > file_modification_time ){
-                this.loaded_alignment_models[modelPath] = await loadAlignmentModel( modelPath );
+                WordAlignWebview.loaded_alignment_models[modelPath] = await loadAlignmentModel( modelPath );
             }            
         } );
     }
