@@ -49,7 +49,7 @@
         },
         "codex-wordmap.alignmentTraining.bookGroups": {
           "title": "Alignment AI book groups.",
-          "description": "List of book usfm files which should be grouped together when training alignment AI.  OT and NT should be separate groups because they are different languages.  Each usfm file on its own line and separate groups of usfm files with an empty line.  Any file which doesn't match a group will assume it is in a group of its own.",
+          "description": "List of book codex files which should be grouped together when training alignment AI.  OT and NT should be separate groups because they are different languages.  Each codex file on its own line and separate groups of codex files with an empty line.  Any file which doesn't match a group will assume it is in a group of its own.",
           "default": "",
           "type": "string",
           "editPresentation": "multilineText"

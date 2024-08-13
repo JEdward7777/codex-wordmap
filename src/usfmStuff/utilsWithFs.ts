@@ -249,7 +249,9 @@ export async function getBookGroups(
     const lines = bookGroupsString.split( "\n" );
     let currentGroup : string[] = [];
     for( const line of lines ){
-        if( line.trim() ){
+        if( line.trim().startsWith( "#" ) ){
+            //ignore comments
+        }else if( line.trim() ){
             currentGroup.push( line );
         }else{
             if( currentGroup.length > 0 ){
@@ -265,7 +267,14 @@ export async function getBookGroups(
 
     //Now I need to path join these with the first folder in the workspace.
     for( let i = 0; i < bookGroups.length; i++ ){
-        bookGroups[i] = bookGroups[i].map( b => path.join( workspaceFolders[0].uri.path, b ) ).map( b => path.normalize( b ) );
+        bookGroups[i] = bookGroups[i].map( b => {
+            const basePath = path.join( workspaceFolders[0].uri.path, "files", "target" );
+            let joined = path.join( basePath, b );
+            if( !joined.toLowerCase().endsWith(".codex") ){
+                joined += ".codex";
+            }
+            return joined;
+        }).map( b => path.normalize( b ) );
     }
 
     //now see if the usfm files which are currently open are represented, otherwise add each of them as their own group.

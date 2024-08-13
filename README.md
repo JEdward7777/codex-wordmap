@@ -86,6 +86,38 @@ This will also compile the sub-repository.
 3. Identify where you want the exported USFM saved and press enter.
 4. The USFM file will be exported to the specified location.
 
+## Training Alignment Suggestions
+
+### Alignment Training Settings
+_codex-wordmap_ includes the following configurable settings related to alignment training:
+
+1. **codex-wordmap.alignmentTraining.enabled**
+   - This setting enables or disables the background training of the alignment suggestion model. If enabled, every time the Codex notebook is saved, the model will retrain in a background thread. This model is used in the wordmap webview to provide alignment suggestions.
+
+2. **codex-wordmap.alignmentTraining.bookGroups**
+   - This is a list of book Codex files that should be grouped together when training the alignment AI. Due to the different languages, Old Testament (OT) and New Testament (NT) should be separate groups. Each Codex file should be on its own line, and separate groups should be separated with an empty line. Any file that doesn't match a group will be assumed to be in its own group.  The path is relative to the files/target project folder and the .codex extension is optional.
+
+### Example of Configuration
+```
+# Group for Old Testament
+Genesis
+Exodus
+Leviticus
+
+# Group for New Testament
+Matthew
+Mark
+Luke
+```
+
+### Activating User Settings
+To modify the alignment training settings for _codex-wordmap_:
+
+1. Open Visual Studio Code and press `Ctrl+Shift+P` to open the Command Palette.
+2. Type "Preferences: Open Settings (UI)" to access the settings editor with a user-friendly interface.
+3. In the settings, search for `codex-wordmap` to find and modify the relevant settings like `alignmentTraining.enabled` and `alignmentTraining.bookGroups`.
+4. Adjust the settings as needed, and ensure your configuration reflects the desired setup for alignment training.
+
 ## Usage
 
 For a video demonstration on how to use the project, see this [YouTube tutorial](https://youtu.be/a50lTK3R8po).
