@@ -91,8 +91,14 @@ const AlignmentDialogWrapper: React.FC<AlignmentDialogWrapperProps> = ({
     const height = 500;
 
     const translate = (text: string) => {
-        if( text === "" ){
-            return "";
+        if( text === "suggestions.refresh" ){
+            return "Refresh Suggestions";
+        }else if( text === "suggestions.accept" ){
+            return "Accept Suggestions";
+        }else if( text === "suggestions.reject" ){
+            return "Reject Suggestions";
+        }else if( text === "alignments.clear" ){
+            return "Clear Alignments";
         }
         return text;
     }
