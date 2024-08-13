@@ -119,9 +119,6 @@ class WordAlignWebview{
 
     private getHtmlForWebview( webview: vscode.Webview ) {
 
-        const viteSvgUri = webview.asWebviewUri(vscode.Uri.joinPath(
-            this._context.extensionUri, 'webview-ui', 'wordmap_wrapper', 'build', 'vite.svg'));
-
         const reactIndexJsUri = webview.asWebviewUri(vscode.Uri.joinPath(
             this._context.extensionUri, 'webview-ui', 'wordmap_wrapper', 'build', 'assets', 'index.js'));
         
@@ -132,9 +129,8 @@ class WordAlignWebview{
         <html lang="en">
           <head>
             <meta charset="UTF-8" />
-            <link rel="icon" type="image/svg+xml" href="${viteSvgUri}" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <title>Vite + React</title>
+            <title>Word Align Webview</title>
             <script type="module" crossorigin src="${reactIndexJsUri}"></script>
             <link rel="stylesheet" crossorigin href="${reactIndexCssUri}">
           </head>
