@@ -8,7 +8,13 @@ _codex-wordmap_ is a tool for mapping translated words of the Bible to the sourc
 - npm (version 9.5.1 or higher)
 - Visual Studio Code
 
-## Installation
+## Finding the Plugin
+
+You can find the _codex-wordmap_ plugin on the following platforms:
+- [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=jlansford.codex-wordmap)
+- [Open VSX](https://open-vsx.org/?search=jlansford.codex-wordmap)
+
+## Installation from source
 
 ### Cloning the Repository
 ```sh
