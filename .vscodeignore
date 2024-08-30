@@ -12,6 +12,6 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 
-# Exclude everything in webview-ui, but keep the dist folder
+# Exclude everything in webview-ui, but keep the build folder
 webview-ui/**
-!webview-ui/wordmap_wrapper/dist/**
+!webview-ui/wordmap_wrapper/build/**
