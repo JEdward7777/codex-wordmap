@@ -11,3 +11,7 @@ vsc-extension-quickstart.md
 **/.eslintrc.json
 **/*.map
 **/*.ts
+
+# Exclude everything in webview-ui, but keep the dist folder
+webview-ui/**
+!webview-ui/wordmap_wrapper/dist/**
