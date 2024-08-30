@@ -1059,9 +1059,11 @@ async function generateNotebooks( filenameToPerf: { [filename: string]: Perf } )
 
     //now generate the notebooks.
     for( const [filename, perf] of Object.entries(filenameToPerf) ){
+
+        const baseFilename = filename.replaceAll( "\\", "/" ).split("/").pop()?.split( "." )[0];
     
         //https://stackoverflow.com/questions/175739/built-in-way-in-javascript-to-check-if-a-string-is-a-valid-number
-        const strippedFilename = (filename.split("/").pop()?.split( "." )[0] || "").split('').filter( (char) => char !== "-" && isNaN(char as unknown as number) ).join('');
+        const strippedFilename = (baseFilename || "").split('').filter( (char) => char !== "-" && isNaN(char as unknown as number) ).join('');
 
         const bookAbbreviation = perf.metadata?.document?.bookCode || perf.metadata?.document?.toc3 ||
         perf.metadata?.document?.h || perf.metadata?.document?.toc2 || strippedFilename;
@@ -1079,7 +1081,7 @@ async function generateNotebooks( filenameToPerf: { [filename: string]: Perf } )
             const verseText = getAttributedVerseCharactersFromPerf( perf, reference, false, startIndex ) as string;
 
             //remove path and add .codex
-            const notebookFilename = `./files/target/${filename.split("/").pop()?.split( "." )[0] || ""}.codex`;
+            const notebookFilename = `./files/target/${baseFilename || ""}.codex`;
             const notebookFilenameFullPath = path.join( workspaceFolder, notebookFilename );
 
             //Check if the file already exists and if it does confirm with the user through vscode that the overwrite is ok.
