@@ -227,7 +227,7 @@ async function startAlignmentTrainer(){
                             content: vscode.workspace.workspaceFolders
                         });
                     }else if( message.command === "getFileStat" ){
-                        const stat = await vscode.workspace.fs.stat( vscode.Uri.parse( message.content.filePath ) );
+                        const stat = await vscode.workspace.fs.stat( vscode.Uri.file( message.content.filePath ) );
                         alignmentTrainerWorker?.postMessage({
                             command: "respond",
                             requestId: message.requestId,
