@@ -2,7 +2,7 @@
   "name": "codex-wordmap",
   "displayName": "codex-wordmap",
   "description": "Brings TranslationCore's word alignment dialog to codex using the boosted wordmap prediction engine.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "jlansford",
   "tags": [
     "codex-translation"
