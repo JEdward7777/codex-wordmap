@@ -9,7 +9,7 @@ import { Alignment, Ngram, Prediction, Suggestion } from 'wordmap';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import * as stringTokenizer from "string-punctuation-tokenizer";
+import { tokenize } from "string-punctuation-tokenizer";
 import { TAttributedString } from './customizedJLDiff';
 
 
@@ -1189,7 +1189,7 @@ export function stringToPerfVerse( verseText: string ): PerfVerse{
 
     //bookmark3
 
-    const wordTokens = stringTokenizer.tokenize( {text:verseText, includePunctuation:true, includeWhitespace:true, includeUnknown:true, verbose:true } );
+    const wordTokens = tokenize( {text:verseText, includePunctuation:true, includeWhitespace:true, includeUnknown:true, verbose:true } );
     //tokens = stringTokenizer.classifyTokens( verseText );
 
     for( const wordToken of wordTokens ){
