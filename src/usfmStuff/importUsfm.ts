@@ -1049,157 +1049,66 @@ async function generateNotebooks( filenameToPerf: { [filename: string]: Perf } )
         throw new Error("No workspace folder found");
     }
 
+    const filenameToNotebooks = Object.fromEntries(Object.entries(filenameToPerf).map( 
+        ([filename, perf]) => {
+            const baseFilename = filename.replaceAll( "\\", "/" ).split("/").pop()?.split( "." )[0];
+            const strippedFilename = (baseFilename || "").split('').filter( (char) => char !== "-" && isNaN(char as unknown as number) ).join('');
+            const bookAbbreviation = perf.metadata?.document?.bookCode || perf.metadata?.document?.toc3 ||
+                perf.metadata?.document?.h || perf.metadata?.document?.toc2 || strippedFilename;
 
-    const filenameToCells: { [filename: string]: vscode.NotebookCellData[] } = {};
+            const references = getIndexedReferencesFromPerf(perf);
+            const cells = Object.entries(references.verses).reduce( (accumulator: { cells: any[], lastChapter: number }, [stringReference, startIndex])=> {
+                const [chapter, verse] = stringReference.split(":").map(Number);
 
-    let currentFilename = "";
-    let currentChapter = -1;
-    let currentVerse = -1;
-    let currentChapterCell : vscode.NotebookCellData | undefined = undefined;
-
-    //now generate the notebooks.
-    for( const [filename, perf] of Object.entries(filenameToPerf) ){
-
-        const baseFilename = filename.replaceAll( "\\", "/" ).split("/").pop()?.split( "." )[0];
-    
-        //https://stackoverflow.com/questions/175739/built-in-way-in-javascript-to-check-if-a-string-is-a-valid-number
-        const strippedFilename = (baseFilename || "").split('').filter( (char) => char !== "-" && isNaN(char as unknown as number) ).join('');
-
-        const bookAbbreviation = perf.metadata?.document?.bookCode || perf.metadata?.document?.toc3 ||
-        perf.metadata?.document?.h || perf.metadata?.document?.toc2 || strippedFilename;
-
-        //h followed by toc2 followed by bookCode followed by toc3 followed by the filename with nothing except for letters
-        const bookName = perf.metadata?.document?.h || perf.metadata?.document?.toc2 ||
-        perf.metadata?.document?.bookCode || perf.metadata?.document?.toc3 || strippedFilename;
-
-        const references = getIndexedReferencesFromPerf(perf);
-
-        for( const [stringReference, startIndex] of Object.entries(references.verses) ){
-            const [chapter, verse] = stringReference.split(":").map(Number);
-            const reference = {chapter,verse};
-
-            const verseText = getAttributedVerseCharactersFromPerf( perf, reference, false, startIndex ) as string;
-
-            //remove path and add .codex
-            const notebookFilename = `./files/target/${baseFilename || ""}.codex`;
-            const notebookFilenameFullPath = path.join( workspaceFolder, notebookFilename );
-
-            //Check if the file already exists and if it does confirm with the user through vscode that the overwrite is ok.
-            if( currentFilename !== notebookFilename ){
-                let fileExists = false;
-                try{
-                    await vscode.workspace.fs.stat(vscode.Uri.file(notebookFilenameFullPath));
-                    fileExists = true;
-                }catch(err){
-                    fileExists = false;
+                //put in chapter headings if the chapter has changed.
+                if( chapter !== accumulator.lastChapter ){
+                    accumulator.cells.push({
+                        kind: 2, //TODO look up a constant for this.
+                        value: `<h1>Chapter ${chapter}</h1>`,
+                        languageId: "paratext",
+                        outputs: [],
+                        metadata: {
+                            type: "paratext",
+                            id: `${bookAbbreviation} ${chapter}:0`,
+                        }
+                    });
                 }
-                if( fileExists ){
-                    const overwrite = await vscode.window.showWarningMessage(
-                        `Overwrite ${notebookFilename}?`,
-                        { modal: true },
-                        "Yes");
-                    
-                    if( !overwrite ) throw new Error("Overwrite cancelled");
-                }
-            }
 
-            //If the chapter or filename has changed then add the notes to the previous chapter if it exists.
-            if( (currentChapter !== -1 && ((currentChapter !== reference.chapter) || (currentFilename && currentFilename !== notebookFilename))) ){
-                filenameToCells[currentFilename].push(
-                    new vscode.NotebookCellData(
-                        vscode.NotebookCellKind.Markup,
-                        `### Notes for Chapter ${currentChapter}`,
-                        "markdown"
-                    )
-                );
-            }
-
-
-            //if we are in a new filename, start a new cell group.
-            if( !(notebookFilename in filenameToCells) ) filenameToCells[notebookFilename] = [];
-            const cells = filenameToCells[notebookFilename];
-
-            //If we are in a new chapter, create the chapter header.
-            if( currentChapter !== reference.chapter || (currentFilename && currentFilename !== notebookFilename)){
-                const newCell = new vscode.NotebookCellData(
-                    vscode.NotebookCellKind.Markup,
-                    `# Chapter ${reference.chapter}`,
-                    "markdown"
-                );
-                newCell.metadata = {
-                    type: CellTypes.CHAPTER_HEADING,
-                    data: {
-                        chapter: "" + reference.chapter
+                //now pass the actual verse content.
+                const reference = {chapter,verse};
+                const verseText = getAttributedVerseCharactersFromPerf( perf, reference, false, startIndex ) as string;
+                accumulator.cells.push({
+                    kind: 2, //TODO look up a constant for this.
+                    value: verseText,
+                    languageId: "scripture",
+                    outputs: [],
+                    metadata: {
+                        type: "text",
+                        id: `${bookAbbreviation} ${chapter}:${verse}`,
                     }
-                };
-                if( reference.chapter === 1 ){
-                    newCell.metadata.perf = perf;
+                });
+
+                return {cells: accumulator.cells, lastChapter: chapter};
+            }, {cells:[], lastChapter: -1}).cells;
+
+            const result = {
+                cells,
+                metadata: {
+                    originalName: filename
                 }
-                cells.push(newCell);
+            };
 
-                currentChapterCell = undefined;
-            }
-
-            //if we don't have a current cell create one.
-            if( currentChapterCell === undefined ){
-                currentChapterCell = new vscode.NotebookCellData(
-                    vscode.NotebookCellKind.Code,
-                    "",
-                    "scripture"
-                );
-                cells.push( currentChapterCell );
-            }else{
-                //otherwise add a newline.
-                currentChapterCell!.value += `\n`;
-            }
-            
-
-            currentFilename = notebookFilename;
-            currentChapter = reference.chapter;
-            currentVerse = reference.verse;
-
-            const refString = `${bookAbbreviation} ${currentChapter}:${currentVerse}`;
-            const verseContent = importHacks(verseText);
-
-                
-            currentChapterCell!.value += `${refString} ${verseContent}`;
-        
+            return [baseFilename, result];
         }
-    }
+    ));
 
-    //close out the last one.
-    if( currentFilename && currentChapter !== -1  ){
-        filenameToCells[currentFilename].push(
-            new vscode.NotebookCellData(
-                vscode.NotebookCellKind.Markup,
-                `### Notes for Chapter ${currentChapter}`,
-                "markdown"
-            )
+    for( const [baseFilename, notebook] of Object.entries(filenameToNotebooks) ){
+        const outputFilename = 
+        vscode.Uri.joinPath(vscode.Uri.file(path.normalize(path.join(workspaceFolder, "files", "target"))), baseFilename + ".codex");
+        await vscode.workspace.fs.writeFile(outputFilename,
+            new TextEncoder().encode(JSON.stringify(notebook, undefined, 2))
         );
     }
-
-    //now create the notebooks all in parallel.
-    const serializer = new CodexContentSerializer();
-    await Promise.all(
-        Object.entries(filenameToCells).map(
-            async ([filePath, cells]) => {
-                const notebookData = new vscode.NotebookData(cells);
-
-                return serializer.serializeNotebook(
-                    notebookData,
-                    new vscode.CancellationTokenSource().token
-                ).then((notebookFile) => {
-                    // Save the notebook using generateFiles
-                    return generateFiles({
-                        filepath: filePath,
-                        fileContent: notebookFile,
-                        shouldOverWrite: true,
-                    });
-                });
-            }
-        )
-    );
-
 
 }
 
