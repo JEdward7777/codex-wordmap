@@ -178,35 +178,38 @@ function importHacks( verseContent : string ) : string{
 
     result = result.trim();
 
-    // // Put space between this kind of quote mark and letter.
-    // result = result.replace(/(‘)([a-z0-9])/ig, "$1 $2");
+    // Put space between this kind of quote mark and letter.
+    result = result.replace(/(‘)([a-z0-9])/ig, "$1 $2");
 
-    // // //add a space after a comma. (Perhaps this isn't a hack.  Why are we having to do this?)
-    // // result = result.replace(/(,)([a-z])/ig, "$1 $2");
+    // //add a space after a comma. (Perhaps this isn't a hack.  Why are we having to do this?)
+    // result = result.replace(/(,)([a-z])/ig, "$1 $2");
 
-    // //remove the space between a { and a letter.
-    // result = result.replace(/({) ([a-z])/ig, "$1$2");
+    //remove the space between a { and a letter.
+    result = result.replace(/({) ([a-z])/ig, "$1$2");
 
-    // //surround a quote mark with spaces.
-    // //I don't think this is good, but it is what is currently going on.
-    // result = result.replace(/(’)([a-z])/ig, "$1 $2");
-    // result = result.replace(/([a-z])(’)/ig, "$1 $2");
+    //surround a quote mark with spaces.
+    //I don't think this is good, but it is what is currently going on.
+    result = result.replace(/(’)([a-z])/ig, "$1 $2");
+    result = result.replace(/([a-z])(’)/ig, "$1 $2");
 
-    // //now put a space after all the commas.  This makes 5,000 into 5, 000 but we are
-    // //just trying to match what is there and we can remove these hacks after.
-    // result = result.replace(/(,)([a-z0-9])/ig, "$1 $2");
+    //now put a space after all the commas.  This makes 5,000 into 5, 000 but we are
+    //just trying to match what is there and we can remove these hacks after.
+    result = result.replace(/(,)([a-z0-9])/ig, "$1 $2");
 
-    // //Remove this space. K.
-    // result = result.replace(/(—) ([^ ])/ig, "$1$2");
+    //Remove this space. K.
+    result = result.replace(/(—) ([^ ])/ig, "$1$2");
     
-    // //Add this space.  K.
-    // result = result.replace(/([a-z])(…)/ig, "$1 $2");
+    //Add this space.  K.
+    result = result.replace(/([a-z])(…)/ig, "$1 $2");
 
-    // //Add a space before {
-    // result = result.replace(/([a-z])({)/ig, "$1 $2");
+    //Add a space before {
+    result = result.replace(/([a-z])({)/ig, "$1 $2");
 
-    // //add spaces before th between it and the number.  So 11 th instead of 11th.
-    // result = result.replace(/([0-9])(th|st|nd|rd)/ig, "$1 $2");
+    //Add a space after }
+    result = result.replace(/(})([a-z])/ig, "$1 $2");
+
+    //add spaces before th between it and the number.  So 11 th instead of 11th.
+    result = result.replace(/([0-9])(th|st|nd|rd)/ig, "$1 $2");
     
     return result;
 
@@ -1043,6 +1046,24 @@ export async function readUsfmData( usfmFiles: vscode.Uri[] ) : Promise<{ [filen
 
 async function generateNotebooks( filenameToPerf: { [filename: string]: Perf } ) {
 
+    const OTBooks = [ 
+        "GEN", "EXO", "LEV", "NUM", "DEU", "JOS",
+        "JDG", "RUT", "1SA", "2SA", "1KI", "2KI",
+        "1CH", "2CH", "EZR", "NEH", "EST", "JOB",
+        "PSA", "PRO", "ECC", "SNG", "ISA", "JER",
+        "LAM", "EZK", "DAN", "HOS", "JOL", "AMO",
+        "OBA", "JON", "MIC", "NAM", "HAB", "ZEP",
+        "HAG", "ZEC", "MAL"
+    ];
+
+    const NTBooks = [ 
+        "MAT", "MRK", "LUK", "JHN", "ACT", "ROM",
+        "1CO", "2CO", "GAL", "EPH", "PHP", "COL",
+        "1TH", "2TH", "1TI", "2TI", "TIT", "PHM",
+        "HEB", "JAS", "1PE", "2PE", "1JN", "2JN",
+        "3JN", "JUD", "REV"
+    ];
+
     const workspaceFolder = getWorkSpaceFolder();
 
     if (!workspaceFolder) {
@@ -1076,7 +1097,7 @@ async function generateNotebooks( filenameToPerf: { [filename: string]: Perf } )
 
                 //now pass the actual verse content.
                 const reference = {chapter,verse};
-                const verseText = getAttributedVerseCharactersFromPerf( perf, reference, false, startIndex ) as string;
+                const verseText = importHacks(getAttributedVerseCharactersFromPerf( perf, reference, false, startIndex ) as string);
                 accumulator.cells.push({
                     kind: 2, //TODO look up a constant for this.
                     value: verseText,
@@ -1091,10 +1112,21 @@ async function generateNotebooks( filenameToPerf: { [filename: string]: Perf } )
                 return {cells: accumulator.cells, lastChapter: chapter};
             }, {cells:[], lastChapter: -1}).cells;
 
+            const originalName = (baseFilename || "").replace(/\.[^.]*$/, '');
+
+            const whichTestiment = NTBooks.includes(bookAbbreviation) ? "NT" : OTBooks.includes(bookAbbreviation) ? "OT" : "";
+
             const result = {
                 cells,
                 metadata: {
-                    originalName: filename
+                    id: originalName.replace(/ /g, "-").toUpperCase() + '-' + new Date().toISOString().replace(
+                        /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).*/,
+                        "$1$2$3T$4$5$6"
+                    ),
+                    originalName: originalName,
+                    data: {
+                        corpusMarker: whichTestiment
+                    }
                 }
             };
 
