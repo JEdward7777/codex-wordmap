@@ -1126,7 +1126,8 @@ async function generateNotebooks( filenameToPerf: { [filename: string]: Perf } )
                     originalName: originalName,
                     data: {
                         corpusMarker: whichTestiment
-                    }
+                    },
+                    perf,
                 }
             };
 
