@@ -1154,8 +1154,7 @@ async function generateNotebooks( filenameToPerf: { [filename: string]: Perf } )
                     `The file ${baseFilename}.codex already exists. Overwrite?`,
                     { modal: true },
                     "Yes",
-                    "No",
-                    //"Cancel"
+                    "No"
                 );
     
                 if (choice === "No") {
