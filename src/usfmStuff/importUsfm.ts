@@ -1134,13 +1134,53 @@ async function generateNotebooks( filenameToPerf: { [filename: string]: Perf } )
         }
     ));
 
-    for( const [baseFilename, notebook] of Object.entries(filenameToNotebooks) ){
-        const outputFilename = 
-        vscode.Uri.joinPath(vscode.Uri.file(path.normalize(path.join(workspaceFolder, "files", "target"))), baseFilename + ".codex");
-        await vscode.workspace.fs.writeFile(outputFilename,
-            new TextEncoder().encode(JSON.stringify(notebook, undefined, 2))
+    for (const [baseFilename, notebook] of Object.entries(filenameToNotebooks)) {
+        const outputFilename = vscode.Uri.joinPath(
+            vscode.Uri.file(path.normalize(path.join(workspaceFolder, "files", "target"))),
+            baseFilename + ".codex"
         );
+    
+        try {
+            // Check if the file already exists
+            const fileExists = await vscode.workspace.fs.stat(outputFilename).then(
+                () => true,
+                () => false
+            );
+    
+            if (fileExists) {
+                // Prompt the user for overwrite confirmation
+                const choice = await vscode.window.showWarningMessage(
+                    `The file ${baseFilename}.codex already exists. Overwrite?`,
+                    { modal: true },
+                    "Yes",
+                    "No",
+                    //"Cancel"
+                );
+    
+                if (choice === "No") {
+                    // Skip this file
+                    continue;
+                } else if (choice === undefined) {
+                    // Stop writing files altogether
+                    break;
+                }
+            }
+    
+            // Write the file
+            await vscode.workspace.fs.writeFile(
+                outputFilename,
+                new TextEncoder().encode(JSON.stringify(notebook, undefined, 2))
+            );
+        } catch (error) {
+            // Handle errors gracefully
+            if (error instanceof Error) {
+                vscode.window.showErrorMessage(`Failed to process ${baseFilename}: ${error.message}`);
+            } else {
+                vscode.window.showErrorMessage(`Failed to process ${baseFilename}: Unknown error`);
+            }
+        }
     }
+    
 
 }
 
