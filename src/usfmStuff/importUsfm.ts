@@ -40,10 +40,10 @@ async function getImportParameters() : Promise<UsfmImportParameters> {
     return { usfmFiles };
 }
 
-async function getExportParameters( codex_filename: string ) : Promise<UsfmExportParameters> {
+async function getExportParameters( codex_filename: vscode.Uri ) : Promise<UsfmExportParameters> {
     //show a save as dialog pre-populated with the usfm version of the currently open document.
 
-    const usfm_filename = path.parse(codex_filename).name + ".usfm";
+    const usfm_filename = path.parse(codex_filename.fsPath).name + ".usfm";
 
     //get the root directory of the current open project.
     const root_dir = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
@@ -862,7 +862,7 @@ export async function getPerfFromNotebookSingleVerseOptimized( notebook: CodexNo
 }
 
 
-async function doUsfmExport(codex_filename: string, exportParameters: UsfmExportParameters) {
+async function doUsfmExport(codex_filename: vscode.Uri, exportParameters: UsfmExportParameters) {
     const perf = await getPerfFromActiveNotebook();
 
     const usfmData = perfToUsfm( perf );
@@ -1166,27 +1166,20 @@ export function registerUsfmImporter(context: vscode.ExtensionContext) {
 
     const export_disposable = vscode.commands.registerCommand('codex-wordmap.exportUsfm', async () => {
         
-        //vscode.window.showInformationMessage( "Usfm export not implemented" );
 
-        //show an information message with the name of the currently open vscode document.
         //const currently_open_document = vscode.window.activeTextEditor?.document;
-
-        const notebookEditor = vscode.window.activeNotebookEditor;
+        const [notebookEditor, codex_filename] = await getActiveCodexNotebookAsJsonData();
         if (!notebookEditor) {
             vscode.window.showErrorMessage('No active notebook editor found');
             return;
         }
     
-
-        //const codex_filename = currently_open_document.fileName;
-        const codex_filename = notebookEditor.notebook.uri.fsPath;
-
         if( !codex_filename ){
             vscode.window.showInformationMessage( "No document open" );
             return;
         }
 
-        const codex_basename = path.basename(codex_filename);
+        const codex_basename = path.basename(codex_filename.fsPath);
 
         //make sure the extension of the filename is .codex.
         if( !codex_basename.endsWith(".codex") ){
