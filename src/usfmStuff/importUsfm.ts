@@ -8,6 +8,8 @@ import { CellTypes } from '../codexUtils/codexNotebookUtils';
 import path from 'path';
 import { DiffState, TAttributedString, traceDiffs } from './customizedJLDiff';
 import { getWorkSpaceFolder } from '../codexUtils';
+import { CodexNotebookAsJSONData } from '../CodexFileformat';
+import { getActiveCodexNotebookAsJsonData, loadCodex } from '../codexWordmapJunction';
 
 type UsfmImportParameters = {
     usfmFiles: vscode.Uri[];
@@ -15,6 +17,10 @@ type UsfmImportParameters = {
 type UsfmExportParameters = {
     usfmSaveUri: vscode.Uri;
 };
+
+
+
+
 
 async function getImportParameters() : Promise<UsfmImportParameters> {
     //https://vshaxe.github.io/vscode-extern/vscode/OpenDialogOptions.html
@@ -62,60 +68,41 @@ async function getExportParameters( codex_filename: string ) : Promise<UsfmExpor
     return { usfmSaveUri };
 }
 
-async function collectScriptureDataFromNotebook( notebook: vscode.NotebookDocument ) : Promise<{ [ref: string]: string; }> {
-
-    //regular expression which will match a number a colon and a number.
-    const referenceFinder = /(?<chapter>\d+):(?<verse>\d+)/;
-
+async function collectScriptureDataFromNotebook( notebook: CodexNotebookAsJSONData ) : Promise<{ [ref: string]: string; }> {
 
     const result: {[ref: string]: string} = {};
 
-    for (let i = 0; i < notebook.cellCount; i++) {
-        const cell = notebook.cellAt(i);
+    for (let i = 0; i < notebook.cells.length; i++) {
+        const cell = notebook.cells[i];
         if (cell.kind === vscode.NotebookCellKind.Code) {
-            //only consider code cells.  The headers and the notes
-            //are markdown.
-            const content = cell.document.getText();
+            const ref = cell.metadata.id;
+            if (!ref) continue;
+            const verseRefTRef = stringRefToTReference( ref );
+            if( !verseRefTRef ) continue;
 
-            //iterate line by line.
-            const lines = content.split("\n");
-            for (const line of lines) {
-                const match = referenceFinder.exec(line);
-                if (match) {
-                    const ref = `${match.groups!.chapter}:${match.groups!.verse}`;
-                    const matchIndex = match.index;
-                    const matchLength = match[0].length;
-                    let firstNonMatchedIndex = matchIndex + matchLength;
-                    //inc if that is a space.
-                    if (firstNonMatchedIndex < line.length && line[firstNonMatchedIndex] === " ") {
-                        firstNonMatchedIndex++;
-                    }
-                    //The verse is everything after the capture.
-                    const verse = line.substring(firstNonMatchedIndex);
-                    result[ref] = verse;
-                }
-            }
+            if( verseRefTRef.verse === 0 ) continue;
+            const perfIndexVerseKey = `${verseRefTRef.chapter}:${verseRefTRef.verse}`;
+            
+            const verse = cell.value;
+
+            //remove all html tags using regex.
+            const verseWithoutHtml = verse.replace(/<[^>]*>/g, '');
+            
+
+            result[perfIndexVerseKey] = verseWithoutHtml;
         }
     }
 
     return result;
 }
 
-function getUnupdatedPerfFromNotebookOrMakeIt( notebook: vscode.NotebookDocument ) : Perf {
-    //the perf is stashed in the markdown for Chapter 1.
-    //So just scan through all the cells and return the first perf
-    //in the metadata which is found.
-    //If there is none we will create one and return it.
-
-    for (let i = 0; i < notebook.cellCount; i++) {
-        const cell = notebook.cellAt(i);
-        if (cell.kind === vscode.NotebookCellKind.Markup) {
-            if( cell?.metadata?.perf ){
-                return deepCopy(cell.metadata.perf) as Perf;
-            }
-        }
+async function getUnupdatedPerfFromNotebookOrMakeIt( notebook?: CodexNotebookAsJSONData ) : Promise<Perf> {
+    //the perf is stashed in the metadata of the notebook.
+    //if it is there, return it.
+    //otherwise fall through and we will construct one.
+    if (notebook?.metadata?.perf) {
+        return deepCopy(notebook.metadata.perf) as Perf;
     }
-
     //if we get this far we need to construct a perf.
     //So invent a minimal usfm and convert it to perf.
     const minimal_usfm = `
@@ -127,47 +114,14 @@ function getUnupdatedPerfFromNotebookOrMakeIt( notebook: vscode.NotebookDocument
     return minimal_perf;
 }
 
-export async function updatePerfOnNotebook(notebook: vscode.NotebookDocument, perf: Perf) {
-    let cellEdit: vscode.NotebookEdit | null = null;
-
-    // Iterate over each cell to find the ones with existing metadata
-    for (let i = 0; i < notebook.cellCount && cellEdit === null; i++) {
-        const cell = notebook.cellAt(i);
-        if (cell.kind === vscode.NotebookCellKind.Markup) {
-            if (cell.metadata?.perf) {
-                // Create a new metadata object with the updated perf
-                const newMetadata = {
-                    ...cell.metadata,
-                    perf: perf
-                };
-
-                // Create a notebook edit to update the cell's metadata
-                cellEdit = vscode.NotebookEdit.updateCellMetadata(i, newMetadata);
-            }
-        }
-    }
-
-    // If we still didn't find the cell with existing metadata, go ahead and search through
-    // all the cells and find the first one which is referencing a chapter which should be Chapter 1.
-    for( let i = 0; i < notebook.cellCount && cellEdit === null; i++ ){
-        const cell = notebook.cellAt(i);
-        if( cell.kind === vscode.NotebookCellKind.Markup ){
-            //Test if the cell's contents starts with "# Chapter"
-            if( cell.document.getText().startsWith("# Chapter") ){ 
-                cellEdit = vscode.NotebookEdit.updateCellMetadata(i, { 
-                    ...cell.metadata,
-                    perf: perf 
-                });
-            }
-        }
-    }
-
-    // Apply the edit to the notebook
-    if( cellEdit !== null ){
-        const edit = new vscode.WorkspaceEdit();
-        edit.set(notebook.uri, [cellEdit]);
-        await vscode.workspace.applyEdit(edit);
-    }
+export async function updatePerfOnNotebook(perf: Perf, document_uri: vscode.Uri ) {
+    //Reload the codex file just in case it was modified while alignment was going on.
+    const codexDocument = await loadCodex(document_uri);
+    //now replace the perf in the metadata location.
+    codexDocument.metadata.perf = perf;
+    //Save it back out using vscode stuffs.  It is just a json file.
+    const asJsonString = JSON.stringify(codexDocument, null, 2);
+    await vscode.workspace.fs.writeFile(document_uri, Buffer.from(asJsonString));
 }
 //The point of this hack is to get the strings to look the same as the other importer even if it doesn't make sense.
 //I am trying to round trip so I want things to be the same so I can catch important stuff.  We can remove the hacks
@@ -834,18 +788,20 @@ function executeNotebookEditActions( unupdated_perf : Perf, notebook_edit_action
     }
 }
 
-export async function getPerfFromActiveNotebook( notebook?: vscode.NotebookDocument) : Promise<Perf> {
+export async function getPerfFromActiveNotebook( notebook?: CodexNotebookAsJSONData, document_uri?: vscode.Uri) : Promise<Perf> {
 
 
     if( !notebook ){
-        const notebookEditor = vscode.window.activeNotebookEditor;
-        if (!notebookEditor) throw new Error('No active notebook editor found');
-        notebook = notebookEditor.notebook;
+        [notebook, document_uri] = await getActiveCodexNotebookAsJsonData();
+    }
+
+    if( !notebook || !document_uri ){
+        throw new Error("No active codex file.");
     }
 
     const notebook_content = await collectScriptureDataFromNotebook(notebook);
 
-    const perf = getUnupdatedPerfFromNotebookOrMakeIt(notebook);
+    const perf = await getUnupdatedPerfFromNotebookOrMakeIt(notebook);
 
     const perf_index = getIndexedReferencesFromPerf(perf);
 
@@ -853,7 +809,7 @@ export async function getPerfFromActiveNotebook( notebook?: vscode.NotebookDocum
 
     executeNotebookEditActions( perf, notebook_edit_actions, perf_index );
 
-    await updatePerfOnNotebook( notebook, perf );
+    await updatePerfOnNotebook( perf, document_uri );
 
     return perf;
 }
@@ -863,18 +819,18 @@ export async function getPerfFromActiveNotebook( notebook?: vscode.NotebookDocum
  * This function is an optimized version of getPerfFromActiveNotebook can save time if
  * the specifically referenced verse hasn't changed or can be updated without updating everything.
  *
- * @param {vscode.NotebookDocument} notebook - The notebook document to retrieve the Perf object from.
+ * @param {CodexNotebookAsJSONData} notebook - The notebook document to retrieve the Perf object from.
  * @param {string} verseRef - The reference of the verse to retrieve.
  * @return {Promise<Perf>} A Promise that resolves to the Perf object containing the verse reference.
  */
-export async function getPerfFromNotebookSingleVerseOptimized( notebook: vscode.NotebookDocument, verseRef: string ) : Promise<Perf | undefined> {
+export async function getPerfFromNotebookSingleVerseOptimized( notebook: CodexNotebookAsJSONData, verseRef: string, document_uri: vscode.Uri ) : Promise<Perf | undefined> {
     const notebook_content = await collectScriptureDataFromNotebook(notebook);
     const verseRefTRef = stringRefToTReference( verseRef );
     if( !verseRefTRef ) return undefined;
     const perfIndexVerseKey = `${verseRefTRef.chapter}:${verseRefTRef.verse}`;
     const newVerseText = notebook_content[perfIndexVerseKey];
     if( !newVerseText ) return undefined;
-    const perf = getUnupdatedPerfFromNotebookOrMakeIt(notebook);
+    const perf = await getUnupdatedPerfFromNotebookOrMakeIt(notebook);
     const perf_index = getIndexedReferencesFromPerf(perf);
 
     //if the current verse doesn't exist in the perf we need to 
@@ -885,7 +841,7 @@ export async function getPerfFromNotebookSingleVerseOptimized( notebook: vscode.
         //do full update action.
         const notebook_edit_actions = combineIndexWithContentIntoActions(notebook_content, perf_index, true, perf);
         executeNotebookEditActions( perf, notebook_edit_actions, perf_index );
-        await updatePerfOnNotebook( notebook, perf );
+        await updatePerfOnNotebook( perf, document_uri );
         return perf;
     }
 
@@ -901,7 +857,7 @@ export async function getPerfFromNotebookSingleVerseOptimized( notebook: vscode.
     // We will just update this one verse and not do a full 
     //update of the whole perf.
     editVerse( perf, verseRefTRef.chapter, verseRefTRef.verse, newVerseText, verseIndex, true );
-    await updatePerfOnNotebook( notebook, perf );
+    await updatePerfOnNotebook( perf, document_uri );
     return perf;
 }
 

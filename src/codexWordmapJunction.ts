@@ -5,65 +5,56 @@ import { showWordAlignWebview } from "./wordAlignWebview";
 import { Worker } from 'node:worker_threads';
 import { WorkerMessage } from './workers/alignmentTrainerTypes';
 import * as path from 'path';
+import { CodexNotebookAsJSONData } from "./CodexFileformat";
+import { initializeStateStore } from "./statestore";
 
-export function getSourceUri( notebookDocument: vscode.NotebookDocument ) : string | undefined {
-    for( const cell of notebookDocument.getCells() ) {
-        if (cell.kind === vscode.NotebookCellKind.Markup) {
-            if( cell?.metadata?.wordmapSettings?.sourceMapping ) {
-                return cell?.metadata?.wordmapSettings?.sourceMapping;
-            }
-        }
-    }
-    return undefined;
+
+
+export async function getVerseRefFromStateStore(){
+    const {getStoreState} = await initializeStateStore();
+    return (await getStoreState( "cellId" ))?.cellId;
 }
 
-export async function setSourceUri( notebook: vscode.NotebookDocument, sourceUri: string ) {
-    let cellEdit: vscode.NotebookEdit | null = null;
+export async function loadCodex( uri: vscode.Uri ) :  Promise<CodexNotebookAsJSONData> {
+    const document = await vscode.workspace.openTextDocument(uri);
+    const fileContent = document.getText();
+    const data = JSON.parse(fileContent) as CodexNotebookAsJSONData;
+    return data;
+}
 
-    // Iterate over each cell to find the ones with existing metadata
-    for (let i = 0; i < notebook.cellCount && cellEdit === null; i++) {
-        const cell = notebook.cellAt(i);
-        if (cell.kind === vscode.NotebookCellKind.Markup) {
-            if (cell.metadata?.perf) {
-                // Create a new metadata object with the updated setting
-                const newMetadata = {
-                    ...cell.metadata,
-                    wordmapSettings: {
-                        ...cell.metadata?.wordmapSettings,
-                        sourceMapping: sourceUri
-                    }
-                };
-
-                // Create a notebook edit to update the cell's metadata
-                cellEdit = vscode.NotebookEdit.updateCellMetadata(i, newMetadata);
-            }
-        }
+export async function getActiveCodexNotebookAsJsonData() : Promise<[CodexNotebookAsJSONData, vscode.Uri]> {
+    const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
+    const isCodexFile = (tab?.input as any)?.uri?.toString().endsWith(".codex");
+    if (!isCodexFile) {
+        throw new Error("The active file is not a codex file.  Please open a codex file first.");
     }
 
-    // If we still didn't find the cell with existing metadata, go ahead and search through
-    // all the cells and find the first one which is referencing a chapter which should be Chapter 1.
-    for( let i = 0; i < notebook.cellCount && cellEdit === null; i++ ){
-        const cell = notebook.cellAt(i);
-        if( cell.kind === vscode.NotebookCellKind.Markup ){
-            //Test if the cell's contents starts with "# Chapter"
-            if( cell.document.getText().startsWith("# Chapter") ){ 
-                cellEdit = vscode.NotebookEdit.updateCellMetadata(i, {
-                    ...cell.metadata,
-                    wordmapSettings: {
-                        ...cell.metadata?.wordmapSettings,
-                        sourceMapping: sourceUri
-                    }
-                });
-            }
-        }
+    //now check if it is dirty using the tab constant.
+    const isDirty = tab?.isDirty;
+    //if it is dirty fuss about it.
+    if (isDirty) {
+        throw new Error(`The file has unsaved changes.  Please save the file first.`);
     }
 
-    // Apply the edit to the notebook
-    if( cellEdit !== null ){
-        const edit = new vscode.WorkspaceEdit();
-        edit.set(notebook.uri, [cellEdit]);
-        await vscode.workspace.applyEdit(edit);
-    }
+    const document_uri = (tab?.input as any)?.uri;
+    return [await loadCodex(document_uri), document_uri];
+}
+
+
+export function getSourceUri( notebookDocument: CodexNotebookAsJSONData ) : string | undefined {
+    return notebookDocument?.metadata?.wordmapSettings?.sourceMapping;
+}
+
+export async function setSourceUri( document_uri: vscode.Uri, sourceUri: string ) {
+
+    //reload the notebook in case it changed.
+    const notebook = await loadCodex( document_uri );
+
+    if( !notebook.metadata.wordmapSettings ) notebook.metadata.wordmapSettings = {};
+    notebook.metadata.wordmapSettings.sourceMapping = sourceUri;
+
+    //now save the notebook
+    await vscode.workspace.fs.writeFile( document_uri, Buffer.from( JSON.stringify( notebook, null, 2 ) ) );
 }
 
 async function getAlignmentData( targetPerf: Perf, sourcePerf: Perf, reference: string ): Promise< TAlignmentPackage | undefined >{
@@ -133,7 +124,7 @@ export async function cachedReadUsfmAsPerf( uri_string: string ): Promise<Perf |
  * @param {string} verseRef - The verse reference.
  * @return {Promise<void>} A promise that resolves when the function completes.
  */
-export async function doCodexWordMapping( context: vscode.ExtensionContext, notebookDocument: vscode.NotebookDocument, verseRef: string ) {
+export async function doCodexWordMapping( context: vscode.ExtensionContext, notebookDocument: CodexNotebookAsJSONData, verseRef: string, document_uri: vscode.Uri ) : Promise<void> {
 
     //verify that the current document has a source file specified.
     const sourceMapping : string | undefined = getSourceUri( notebookDocument );
@@ -144,7 +135,7 @@ export async function doCodexWordMapping( context: vscode.ExtensionContext, note
     }
 
     //Get the perf from the active notebook.
-    let targetPerf = await getPerfFromNotebookSingleVerseOptimized( notebookDocument, verseRef );
+    let targetPerf = await getPerfFromNotebookSingleVerseOptimized( notebookDocument, verseRef, document_uri );
     if( !targetPerf ) return;
 
     //get the perf for the source document.
@@ -166,11 +157,11 @@ export async function doCodexWordMapping( context: vscode.ExtensionContext, note
 
     //call the webview to display the alignments.
     if( !alignmentInfo ) return;
-    const modifiedAlignments : TSourceTargetAlignment[] | undefined = await showWordAlignWebview( context, alignmentInfo, notebookDocument.uri );
+    const modifiedAlignments : TSourceTargetAlignment[] | undefined = await showWordAlignWebview( context, alignmentInfo, document_uri );
     if( !modifiedAlignments ) return;
 
     //get the perf from the active document again in case it changed while the webview was open.
-    targetPerf = await getPerfFromNotebookSingleVerseOptimized( notebookDocument, verseRef );
+    targetPerf = await getPerfFromNotebookSingleVerseOptimized( notebookDocument, verseRef, document_uri );
     if( !targetPerf ) return;
 
     //find the chapter and verse from the reference.
@@ -184,7 +175,7 @@ export async function doCodexWordMapping( context: vscode.ExtensionContext, note
     replaceAlignmentsInPerfInPlace( targetPerf, chapter, verse, modifiedAlignments );
 
     //modify the document with the new perf.
-    await updatePerfOnNotebook( notebookDocument, targetPerf );
+    await updatePerfOnNotebook( targetPerf, document_uri );
 }
 
 let alignmentTrainerWorker: Worker | null = null;
