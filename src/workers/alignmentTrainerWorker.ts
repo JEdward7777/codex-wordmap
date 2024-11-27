@@ -107,6 +107,7 @@ async function getNeedsTraining( bookGroup: string[] ){
 }
 
 async function trainModelForBookGroup( data: TTrainingAndTestingData ){
+    console.log( "crashDebug: trainModelForBookGroup..." );
 
 
     //Convert the data into the structure which the training model expects.
@@ -151,6 +152,9 @@ async function trainModelForBookGroup( data: TTrainingAndTestingData ){
     wordAlignerModel.appendKeyedCorpusTokens(sourceVersesTokenized,targetVersesTokenized);
     
     await wordAlignerModel.add_alignments_2(sourceVersesTokenized,targetVersesTokenized,alignments);
+
+
+    console.log( "crashDebug: trainModelForBookGroup complete" );
 
     return wordAlignerModel;
 
@@ -240,10 +244,10 @@ async function trainBookGroup( bookGroup: string[] ){
     }
 
     //Do the actual training.
-    console.log( "worker: Training...");
+    console.log( "crashDebug: worker: Training...");
 
     const model = await trainModelForBookGroup( bookAlignments );
-    console.log( "worker: Training complete." );
+    console.log( "crashDebug: worker: Training complete." );
 
     //save the model
     if( modelPath ){
@@ -280,7 +284,9 @@ async function trainBookGroup( bookGroup: string[] ){
             });
         };
     
+        console.log( "crashDebug: worker: saving model..." );
         await replaceModel();
+        console.log( "crashDebug: worker: saved model." );
     }
 }
 

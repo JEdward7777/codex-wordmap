@@ -34,6 +34,7 @@ class WordAlignWebview{
                 localResourceRoots: [vscode.Uri.joinPath(this._context.extensionUri, 'webview-ui','wordmap_wrapper','build')]
             }
         );
+        console.log( "crashDebug: showWordAlignWebview" );
         this._panel.webview.html = this.getHtmlForWebview(this._panel.webview);
 
 
@@ -102,6 +103,7 @@ class WordAlignWebview{
 
     public dispose() {
         if( !this.returnCalled ){
+            console.log( "crashDebug: webview closed" );
             this.returnCalled = true;
             this.returnResolver?.(undefined);
         }
@@ -150,6 +152,8 @@ class WordAlignWebview{
     private static loaded_alignment_model_unload_timers: { [model_name: string]: NodeJS.Timeout } = {};
 
     async loadAlignmentModelForDocument(documentUri: vscode.Uri) : Promise<AbstractWordMapWrapper | undefined>{
+        console.log( "crashDebug: loadAlignmentModelForDocument" );
+
         const getConfigurationFunction = async ( section: string ) : Promise<string> => {
             return vscode.workspace?.getConfiguration("codex-wordmap").get( section ) ?? "";
         };
@@ -171,10 +175,12 @@ class WordAlignWebview{
         //see if model_name is loaded in load_alignment_models.
 
         if( !(modelPath in WordAlignWebview.loaded_alignment_models)){
+            console.log( "crashDebug: Doing model load because it wasn't in the loaded models" );
             const result = await loadAlignmentModel( modelPath );
             if ( result === undefined ) return undefined;
             if ( result.model === undefined ) return undefined;
             WordAlignWebview.loaded_alignment_models[modelPath] = result;
+            console.log( "crashDebug: model loaded" );
         }
 
         const {model, file_modification_time} : {model: AbstractWordMapWrapper, file_modification_time: number} = WordAlignWebview.loaded_alignment_models[modelPath];
@@ -198,17 +204,22 @@ class WordAlignWebview{
             //first resolve the result and then check if we need to reload
             resolve( model );
 
+
             const stat = await fs.promises.stat( modelPath );
             const current_modification_time = stat.mtimeMs;
             if( current_modification_time > file_modification_time ){
+                console.log( "crashDebug: Doing after the fact model loading..." );
                 WordAlignWebview.loaded_alignment_models[modelPath] = await loadAlignmentModel( modelPath );
-            }            
+                console.log( "crashDebug: After after the fact model loading." );   
+            }         
         } );
     }
 
     async makeAlignmentSuggestions(
         {documentUri,             sourceSentence,          targetSentence,          maxSuggestions,         manuallyAligned} : 
         {documentUri: vscode.Uri, sourceSentence: TWord[], targetSentence: TWord[], maxSuggestions: number, manuallyAligned: TSourceTargetAlignment[]}) : Promise<TAlignmentSuggestion[]>{
+        
+        console.log( "crashDebug: Running makeAlignmentSuggestions" );
 
         const model = await this.loadAlignmentModelForDocument( documentUri );
         if( model === undefined ) return [];
@@ -220,13 +231,16 @@ class WordAlignWebview{
         updateTokenLocations( targetSentenceWordMap );
         const manuallyAlignedWordMap = manuallyAligned.map( tSourceTargetAlignmentToWordmapAlignment );
 
-        console.log( "making alignment suggestions" );
+        console.log( "crashDebug: making alignment suggestions" );
         
         const suggestions = model.predict( sourceSentenceWordMap, targetSentenceWordMap, maxSuggestions, manuallyAlignedWordMap );
-        console.log( "made alignment suggestions" );
+        console.log( "crashDebug: made alignment suggestions" );
         console.log( suggestions );
 
         const convertedSuggestions = suggestions.map( wordmapSuggestionToTAlignmentSuggestion );
+
+
+        console.log( "crashDebug: returning convertedSuggestions" );
         return convertedSuggestions;
     }
 };

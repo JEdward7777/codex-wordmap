@@ -326,6 +326,7 @@ export function loadAndDecompressJSON(filename: string): Promise<any> {
 }
 
 export async function loadAlignmentModel( modelPath: string ) : Promise<{model: AbstractWordMapWrapper, file_modification_time: number}> {
+    console.log( "crashDebug: loading alignment model: ", modelPath );
     //load the filename,
     //and then decompress it as a gzip
     //and then decode it as JSON.
@@ -334,5 +335,7 @@ export async function loadAlignmentModel( modelPath: string ) : Promise<{model: 
     const model = AbstractWordMapWrapper.load( modelJson );
 
     const stat = await fs.promises.stat( modelPath );
+    console.log( "crashDebug: loaded alignment model: ", modelPath, "mtime: ", stat.mtimeMs );
+
     return { model, file_modification_time: stat.mtimeMs };
 }
