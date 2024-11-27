@@ -176,11 +176,13 @@ export async function doCodexWordMapping( context: vscode.ExtensionContext, note
 
     //modify the document with the new perf.
     await updatePerfOnNotebook( targetPerf, document_uri );
+
+    return startAlignmentTrainer();
 }
 
 let alignmentTrainerWorker: Worker | null = null;
 
-async function startAlignmentTrainer(){
+export async function startAlignmentTrainer(){
     //Check if alignment training is enabled in the config
     if( vscode.workspace.getConfiguration('codex-wordmap').get('alignmentTraining.enabled', true) ){
  
@@ -204,8 +206,26 @@ async function startAlignmentTrainer(){
                             content: vscode.workspace.getConfiguration('codex-wordmap').get(message.content.key, message.content.defaultValue)
                         });
                     }else if( message.command === "getOpenFiles" ){
-                        const openNotebooks = vscode.workspace.notebookDocuments.filter( n => n.notebookType === 'codex-type' );
-                        const openFiles = openNotebooks.map( n => n.uri.fsPath );
+                        // Create an empty array to hold the open files
+                        const openFiles = [];
+
+                        // Get all visible tabs in the current window
+                        const tabGroups = vscode.window.tabGroups.all;
+                        for (const group of tabGroups) {
+                            for (const tab of group.tabs) {
+                                // Check if the tab's input is a valid Text Editor
+                                if (tab.input && 'uri' in (tab.input as any) && (tab.input as any).uri) {
+                                    const filePath = (tab.input as any).uri.fsPath;
+
+                                    // Check if the filename ends with .codex
+                                    if (filePath.endsWith('.codex')) {
+                                        openFiles.push(filePath);
+                                    }
+                                } 
+                            }
+                        }
+
+                        // Respond with the collected file paths
                         alignmentTrainerWorker?.postMessage({
                             command: "respond",
                             requestId: message.requestId,
@@ -243,17 +263,4 @@ async function startAlignmentTrainer(){
     }else{
         console.log( "alignment training not enabled" );
     }
-}
-
-export function registerCodexOnSaveHook( context: vscode.ExtensionContext ) {
-    context.subscriptions.push(vscode.workspace.onDidSaveNotebookDocument((e) => {
-		if( e.notebookType === 'codex-type' ){
-
-            //sleep for a second to allow the save to finish
-            setTimeout(async () => {
-
-                 startAlignmentTrainer();
-            }, 1000);
-		}
-	}));
 }

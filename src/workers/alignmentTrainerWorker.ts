@@ -10,6 +10,7 @@ import { updateTokenLocations } from "wordmapbooster/dist/wordmap_tools";
 import { MorphJLBoostWordMap } from "wordmapbooster/dist/boostwordmap_tools";
 import { Uri } from "vscode";
 import { bookGroupToModelName, getAllAlignmentDataFromCodexBook, getBookGroups } from "../usfmStuff/utilsWithFs";
+import { CodexNotebookAsJSONData } from "../CodexFileformat";
 
 let nextRequestId : number = 0;
 //callbacks a map from a number to a resolve or reject function
@@ -184,9 +185,10 @@ async function trainBookGroup( bookGroup: string[] ){
     }
     const firstWorkspaceFolder = workSpaceFolders[0].uri.path;
 
-    const bookAlignments: TTrainingAndTestingData = await Object.entries(codexContent).reduce(async (promiseAccumulator: Promise<TTrainingAndTestingData>, [filename, content]: [string, string]) => {
+    const bookAlignments: TTrainingAndTestingData = await Object.entries(codexContent).reduce(async (promiseAccumulator: Promise<TTrainingAndTestingData>, [filename, contentAsString]: [string, string]) => {
         const accumulator = await promiseAccumulator;
-        const currentValue = await getAllAlignmentDataFromCodexBook(filename, content, getConfigurationWrapper, firstWorkspaceFolder);
+        const codexData : CodexNotebookAsJSONData = JSON.parse(contentAsString) as CodexNotebookAsJSONData;
+        const currentValue = await getAllAlignmentDataFromCodexBook(filename, codexData, getConfigurationWrapper, firstWorkspaceFolder);
         if (currentValue === undefined) return accumulator;
 
         //I don't want to have collisions between the new references and the ones
@@ -324,6 +326,6 @@ trainModels().then( () => {
     //timeout is needed or the log doesn't show up.
     setTimeout(process.exit, 100);
 } ).catch( e => {
-    console.log( "worker: error: " + e );
+    console.log( "worker: error: ", e );
     setTimeout(process.exit, 100);
 });

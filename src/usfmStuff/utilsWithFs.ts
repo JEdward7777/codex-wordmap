@@ -5,6 +5,7 @@ import * as zlib from 'zlib';
 import { Uri, WorkspaceFolder } from "vscode";
 import { PRIMARY_WORD, Perf, PerfVerse, SECONDARY_WORD, TSourceTargetAlignment, TTrainingAndTestingData, TWord, extractAlignmentsFromPerfVerse, extractWrappedWordsFromPerfVerse, getSourceFolders, pullVersesFromPerf, reindexPerfVerse, sortAndSupplementFromSourceWords, usfmToPerf } from './utils';
 import { AbstractWordMapWrapper } from 'wordmapbooster/dist/boostwordmap_tools';
+import { CodexNotebookAsJSONData } from '../CodexFileformat';
 
 
 function computeSourceFilenames(filename: string, sourceFolders: string[]): string[] {
@@ -78,33 +79,16 @@ export async function getSourceFileForTargetFile(
 
 
 
-function codexToPerf( codexFileContents: string ): Perf | undefined {
-    //parse the codex as json.
-    const codexJson = JSON.parse(codexFileContents);
-
-    for( const cell of codexJson.cells ){
-        if( cell?.metadata?.perf ){
-            return cell?.metadata?.perf as Perf;
-        }
-    }   
-
-    return undefined;
+function codexToPerf( codexFileContents: CodexNotebookAsJSONData ): Perf | undefined {
+    return codexFileContents.metadata.perf;
 }
 
 
-function getSourceFileForTargetCodexFile(codexFileContents: string): string | undefined {
-    const codexJson = JSON.parse(codexFileContents);
-
-    for( const cell of codexJson.cells ){
-        if( cell?.metadata?.wordmapSettings?.sourceMapping ){
-            return cell?.metadata?.wordmapSettings?.sourceMapping;
-        }
-    }
-    
-    return undefined;
+function getSourceFileForTargetCodexFile(codexFileContents: CodexNotebookAsJSONData): string | undefined {
+    return codexFileContents.metadata.wordmapSettings?.sourceMapping;
 }
 
-export async function getAllAlignmentDataFromCodexBook( filename: string, codexFileContents: string, 
+export async function getAllAlignmentDataFromCodexBook( filename: string, codexFileContents: CodexNotebookAsJSONData, 
     getConfiguration: (key: string) => Promise<any>,
     firstWorkSpaceFolder: string ): Promise< TTrainingAndTestingData | undefined >{
 

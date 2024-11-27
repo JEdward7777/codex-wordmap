@@ -1170,7 +1170,7 @@ export function registerUsfmImporter(context: vscode.ExtensionContext) {
         //const currently_open_document = vscode.window.activeTextEditor?.document;
         const [notebookEditor, codex_filename] = await getActiveCodexNotebookAsJsonData();
         if (!notebookEditor) {
-            vscode.window.showErrorMessage('No active notebook editor found');
+            vscode.window.showErrorMessage('No active codex file found');
             return;
         }
     

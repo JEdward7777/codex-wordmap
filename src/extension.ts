@@ -3,7 +3,6 @@
 import * as vscode from 'vscode';
 import { registerCodeLenses } from './wordLensProvider';
 import { registerUsfmImporter } from './usfmStuff/importUsfm';
-import { registerCodexOnSaveHook } from './codexWordmapJunction';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -12,8 +11,6 @@ export function activate(context: vscode.ExtensionContext) {
 	registerCodeLenses(context);
 
 	registerUsfmImporter(context);
-
-	registerCodexOnSaveHook(context);
 }
 
 // This method is called when your extension is deactivated
