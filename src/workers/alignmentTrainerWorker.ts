@@ -11,6 +11,7 @@ import { MorphJLBoostWordMap } from "wordmapbooster/dist/boostwordmap_tools";
 import { Uri } from "vscode";
 import { bookGroupToModelName, getAllAlignmentDataFromCodexBook, getBookGroups } from "../usfmStuff/utilsWithFs";
 import { CodexNotebookAsJSONData } from "../CodexFileformat";
+import { shuffleArray } from "wordmapbooster/dist/misc_tools";
 
 let nextRequestId : number = 0;
 //callbacks a map from a number to a resolve or reject function
@@ -107,13 +108,13 @@ async function getNeedsTraining( bookGroup: string[] ){
 }
 
 async function trainModelForBookGroup( data: TTrainingAndTestingData ){
-    console.log( "crashDebug: trainModelForBookGroup..." );
+    console.log( "crashDebug: trainModelForBookGroup .1 ..." );
 
 
     //Convert the data into the structure which the training model expects.
-    const sourceVersesTokenized : {[reference: string]: Token[] } = {};
-    const targetVersesTokenized : {[reference: string]: Token[] } = {};
-    const alignments: {[reference: string]: Alignment[] } = {};
+    let sourceVersesTokenized : {[reference: string]: Token[] } = {};
+    let targetVersesTokenized : {[reference: string]: Token[] } = {};
+    let alignments: {[reference: string]: Alignment[] } = {};
     Object.entries(data.alignments).forEach(([reference,training_data])=>{
         // sourceVersesTokenized[reference] = wordmapLexer.tokenize(training_data.sourceVerse);
         // targetVersesTokenized[reference] = wordmapLexer.tokenize(training_data.targetVerse);
@@ -127,17 +128,92 @@ async function trainModelForBookGroup( data: TTrainingAndTestingData ){
     });
     
     
-    const sourceCorpusTokenized : {[reference: string]: Token[] } = {};
-    const targetCorpusTokenized : {[reference: string]: Token[] } = {};
+    let sourceCorpusTokenized : {[reference: string]: Token[] } = {};
+    let targetCorpusTokenized : {[reference: string]: Token[] } = {};
     Object.entries(data.corpus).forEach(([reference,training_data])=>{
         sourceCorpusTokenized[reference] = training_data.sourceTokens.map( n => new Token(n) );
         targetCorpusTokenized[reference] = training_data.targetTokens.map( n => new Token(n) );
         updateTokenLocations(sourceCorpusTokenized[reference]);
         updateTokenLocations(targetCorpusTokenized[reference]);
     });
-    
-    
+
+
     //TODO: break the hyper parameters of MorphJLBoostWordMap out into configuration options.
+    //The max alignments sets should also be a configurable option.
+
+    //make alignment sets.
+    //worked 1600  3200 didn't work.
+
+    //now with corpus being 1.5 as big
+    //1600 didn't work.  800 didn't work.  400 didn't work.
+    //200 did work.
+
+    //Now I am testing again with the corpus being set to the same size.
+    //Testing at 800.  Worked.  Testing 1600.  Worked.
+    //Testing 3200.  Didn't work.
+    //Going back to 1600 and then am going to crank back up the other settings for training.
+    //I set the training steps to 1000.  Going to verify this works before increasing the 
+    //percentage to keep back up to .1 .
+    //Didn't work.  Decreasing maxAlignmentSets to 800.  Didn't work.
+    //400 worked.  Ok, now going to increase the .01 back up to .1.
+    //That worked.
+    const maxAlignmentSets = 400;
+    console.log( "crashDebug: maxAlignmentSets ", maxAlignmentSets );
+    if (Object.keys(alignments).length > maxAlignmentSets) {
+        //shuffle the alignments and then take the first target_max_alignments
+        var alignmentsAsArray = Object.entries(alignments);
+        //randomize using shuffle function
+        shuffleArray(alignmentsAsArray);
+        //take the first target_max_alignments
+        alignments = Object.fromEntries(alignmentsAsArray.slice(0, maxAlignmentSets));
+    }
+
+
+    const randomKeyForReference: { [reference: string]: number } = {};
+    const abSortFavoringKeptAlignments = (a: [string, Token[]], b: [string, Token[]]) => {
+        //if a is in the alignments and not b then return -1
+        if (alignments[a[0]] && !alignments[b[0]]) {
+            return -1;
+        }
+        //if b is in the alignments and not a then return 1
+        if (alignments[b[0]] && !alignments[a[0]]) {
+            return 1;
+        }
+
+        //if either reference is not in the random key set, then add a new random number for the entry.
+        if (!randomKeyForReference[a[0]]) {
+            randomKeyForReference[a[0]] = Math.random();
+        }
+        if (!randomKeyForReference[b[0]]) {
+            randomKeyForReference[b[0]] = Math.random();
+        }
+
+        //if both are in the alignments then return the difference of the random key.
+        return randomKeyForReference[a[0]] - randomKeyForReference[b[0]];
+    };
+    
+
+    //This function takes a corpus and filters it so that only the references
+    //that are still in the alignments are left in the corpus.
+    //const maxCorpusSets = maxAlignmentSets*1.5;
+    const maxCorpusSets = maxAlignmentSets;
+    function filterDownToSpecificLimitFavoringAlignmentRefs( toFilter: {[reference: string]: Token[] } ): {[reference: string]: Token[] } {
+        if (Object.keys(toFilter).length <= maxCorpusSets) {
+            return toFilter;
+        }
+        //do a favored sort on the toFilter items.
+        const sorted = Object.entries(toFilter).sort(abSortFavoringKeptAlignments);
+
+        //now get a result that is a slice from the sorted array.
+        const result = sorted.slice(0, maxCorpusSets);
+
+        //now create a new object from the result.
+        return Object.fromEntries(result);
+    }
+    sourceCorpusTokenized = filterDownToSpecificLimitFavoringAlignmentRefs(sourceCorpusTokenized);
+    targetCorpusTokenized = filterDownToSpecificLimitFavoringAlignmentRefs(targetCorpusTokenized);
+    sourceVersesTokenized = filterDownToSpecificLimitFavoringAlignmentRefs(sourceVersesTokenized);
+    targetVersesTokenized = filterDownToSpecificLimitFavoringAlignmentRefs(targetVersesTokenized);
 
     //Create the training object.
     //There are several different word map classes,
@@ -249,7 +325,12 @@ async function trainBookGroup( bookGroup: string[] ){
     const model = await trainModelForBookGroup( bookAlignments );
     console.log( "crashDebug: worker: Training complete." );
 
+    //Await a 5 second sleep so that gc can possibly free up some memory.
+    console.log( "crashDebug: worker: Sleeping for 5 seconds..." );
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
     //save the model
+    console.log( "crashDebug: worker: Saving model..." );
     if( modelPath ){
         const replaceModel = async () : Promise<void> =>   {
             const tempPath = modelPath + ".tmp";
