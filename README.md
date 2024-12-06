@@ -10,8 +10,7 @@ _codex-wordmap_ is a tool for mapping translated words of the Bible to the sourc
 
 ## Finding the Plugin
 
-You can find the _codex-wordmap_ plugin on the following platforms:
-- [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=jlansford.codex-wordmap)
+You can find the _codex-wordmap_ plugin on the following platform:
 - [Open VSX](https://open-vsx.org/extension/jlansford/codex-wordmap)
 
 ## Installation from source
@@ -68,16 +67,17 @@ This will also compile the sub-repository.
 
 ## Running a WordMap Alignment
 
-1. Open a Codex project using the codex-editor plugin. Within the Codex project, open a Codex notebook.
-2. **Associate the Codex file with a source USFM file:**
+1. Open a Codex project using the codex-editor plugin's `Codex Cell Editor`. Within the Codex project, open a Codex notebook.
+2. Make sure the codex notebook is saved.  The white dot must be gone from the tab.
+3. **Associate the Codex file with a source USFM file:**
    - Press `Ctrl+Shift+P` and type "Connect Source USFM".
    - Select the USFM file for the specific book. This file might have been downloaded separately or might be in the resources folder downloaded by the Codex system.
    - Verify the connected USFM file using the command "View Connected Source USFM".
 
-3. Place the cursor within the verse you wish to run wordmap on.
-4. Click the wordmap wordlens which appears above the verse.
-5. Modify the alignment as desired.
-6. Select `Accept` to close the wordmap tab or `Cancel` to discard alignment changes.
+4. Activate the verse you wish to run wordmap on.
+5. Click the wordmap button on the bottom ribbon of the screen.
+6. Modify the alignment as desired.
+7. Select `Accept` to close the wordmap tab or `Cancel` to discard alignment changes.
 
 ## Importing and Exporting USFM Files
 
