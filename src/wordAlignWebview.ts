@@ -45,16 +45,21 @@ class WordAlignWebview{
         //Handle messages from the webview
         this._panel.webview.onDidReceiveMessage(
             (message : CodexWordmapMessage) => {
+                console.log( "crashDebug: onDidReceiveMessage start ", message.command );
                 switch (message.command) {
                     case 'return':
+                        console.log( "crashDebug: return (handleAccept) vscodeside start" );
                         if( !this.returnCalled ) {
                             this.returnCalled = true;
                             this.returnResolver?.(message.content);
                         }
+                        console.log( "crashDebug: return (handleAccept) vscodeside end" );
                         this.dispose();
                         break;
                     case 'close': 
+                        console.log( "crashDebug: close (handleCancel) vscodeside start" );
                         this.dispose();
+                        console.log( "crashDebug: close (handleCancel) vscodeside end" );
                         break;
                     case 'ready':
                         //The react component is ready, give it the reference.
@@ -74,6 +79,7 @@ class WordAlignWebview{
                         break;
 
                     case 'makeAlignmentSuggestions':
+                        console.log( "crashDebug: makeAlignmentSuggestions vscodeside start" );
                         this.makeAlignmentSuggestions( { documentUri: this.document_uri, ...message.content! }  ).then( result => {
                             const response : CodexWordmapMessage = {
                                 command: "response",
@@ -81,6 +87,7 @@ class WordAlignWebview{
                                 content: result,
                             };
                             this._panel?.webview.postMessage(response);
+                            console.log( "crashDebug: makeAlignmentSuggestions vscodeside end" );
                         }).catch( error => {
                             const response : CodexWordmapMessage = {
                                 command: "response",
@@ -89,8 +96,23 @@ class WordAlignWebview{
                             };
                             this._panel?.webview.postMessage(response);
                         });
+                        //for debugging just add a timeout that returns an empty array
+                        //after 10 seconds.
+
+                        // setTimeout( () => {
+                        //     const response : CodexWordmapMessage = {
+                        //         command: "response",
+                        //         requestId: message.requestId,
+                        //         content: [],
+                        //     };
+                        //     this._panel?.webview.postMessage(response);
+                        //     console.log( "crashDebug: makeAlignmentSuggestions vscodeside " );
+                        // }, 10000);
+
+                        console.log( "crashDebug: makeAlignmentSuggestions vscodeside end" );
                         break;
                 }
+                console.log( "crashDebug: onDidReceiveMessage end", message.command );
             },
             undefined,
 			this._disposables

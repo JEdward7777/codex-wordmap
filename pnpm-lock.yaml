@@ -24,8 +24,8 @@ importers:
         specifier: ^0.3.6
         version: 0.3.6
       wordmapbooster:
-        specifier: ^1.0.0
-        version: 1.0.0
+        specifier: ^1.0.1
+        version: 1.0.1
     devDependencies:
       '@types/mocha':
         specifier: ^10.0.3
@@ -2477,8 +2477,8 @@ packages:
     peerDependencies:
       wordmap-lexer: ^0.3.4
 
-  wordmapbooster@1.0.0:
-    resolution: {integrity: sha512-x2wwQxqtIxc5waZfMcjZ+sQqpiB/1f5Fqs6vs856mUF3lUxGYSVL9VmkcLUaU8ayV5YlBJaKfWo9JL80u3C6NQ==}
+  wordmapbooster@1.0.1:
+    resolution: {integrity: sha512-pz51n/T2bRserAURCVuuIlb73Cga5jaTFFpMS2zQ5WutwUIZdEe2eaPJEnnX9+ItGCkOW2Wk3FwZp8ih6QpjFw==}
 
   workerpool@6.5.1:
     resolution: {integrity: sha512-Fs4dNYcsdpYSAfVxhnl1L5zTksjvOJxtC5hzMNl+1t9B8hTJTdKDyZ5ju7ztgPy+ft9tBFXoOlDNiOT9WUXZlA==}
@@ -5258,7 +5258,7 @@ snapshots:
       wordmap-lexer: 0.3.6
       yargs: 11.1.1
 
-  wordmapbooster@1.0.0:
+  wordmapbooster@1.0.1:
     dependencies:
       usfm-js: 3.4.3
       wordmap: 0.6.0(wordmap-lexer@0.3.6)

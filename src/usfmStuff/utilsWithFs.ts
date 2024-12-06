@@ -332,7 +332,7 @@ export async function loadAlignmentModel( modelPath: string ) : Promise<{model: 
     //and then decode it as JSON.
     //and then pass it to AbstractWordMapWrapper.load
     const modelJson = await loadAndDecompressJSON( modelPath );
-    const model = AbstractWordMapWrapper.load( modelJson );
+    const model = await AbstractWordMapWrapper.async_load( modelJson );
 
     const stat = await fs.promises.stat( modelPath );
     console.log( "crashDebug: loaded alignment model: ", modelPath, "mtime: ", stat.mtimeMs );

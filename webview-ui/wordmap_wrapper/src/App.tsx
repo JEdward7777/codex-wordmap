@@ -94,23 +94,30 @@ function App() {
 
 
   const handleCancel = () => {
+    console.log( "crashDebug: handleCancel start" );
     const cancelMessage : CodexWordmapMessage = { command: 'close' };
     vscodeRef.current?.postMessage( cancelMessage );
+    console.log( "crashDebug: handleCancel end" );
   }
 
   const handleAccept = () => {
+    console.log( "crashDebug: handleAccept start" );
     if( latestAlignmentsRef.current !== undefined ){
       const acceptMessage : CodexWordmapMessage = { command: 'return', content: latestAlignmentsRef.current };
       vscodeRef.current?.postMessage( acceptMessage );
     }else{
       handleCancel();
     }
+    console.log( "crashDebug: handleAccept end" );
   }
 
 
 
   const makeAlignmentSuggestions = async ( args:  {sourceSentence: TWord[], targetSentence: TWord[], maxSuggestions: number, manuallyAligned: TSourceTargetAlignment[]}) : Promise<TAlignmentSuggestion[]> => {
-    return (await postMessageWithResponse( { command: 'makeAlignmentSuggestions', content: args } )).content;
+    console.log( "crashDebug: makeAlignmentSuggestions" );
+    const result = (await postMessageWithResponse( { command: 'makeAlignmentSuggestions', content: args } )).content;
+    console.log( "crashDebug: makeAlignmentSuggestions end result: ", result );
+    return result;
   }
 
   return (
