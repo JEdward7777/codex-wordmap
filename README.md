@@ -1,12 +1,12 @@
 # _codex-wordmap_
 
 ## Description
-_codex-wordmap_ is a tool for mapping translated words of the Bible to the source Hebrew and Greek words. This is a Visual Studio Code plugin designed to operate alongside the [codex-editor](https://github.com/genesis-ai-dev/codex-editor) plugin.
+_codex-wordmap_ is a tool for mapping translated words of the Bible to the source Hebrew and Greek words. This is a VSCodium plugin designed to operate alongside the [codex-editor](https://github.com/genesis-ai-dev/codex-editor) plugin.
 
 ## Prerequisites
 - Node.js (version 18.16.0 or higher)
 - npm (version 9.5.1 or higher)
-- Visual Studio Code
+- VSCodium
 
 ## Finding the Plugin
 
@@ -50,15 +50,15 @@ This will also compile the sub-repository.
 
 ## Running the Extension
 
-### Debugging in Visual Studio Code
+### Debugging in VSCodium
 
-1. Open this project in Visual Studio Code.
-2. Press `F5` to start debugging. This will launch an instance of Visual Studio Code with the extension loaded.
-3. In the new instance of Visual Studio Code that opens, you can open or create a Codex project and use the extension for debugging purposes.
+1. Open this project in VSCodium.
+2. Press `F5` to start debugging. This will launch an instance of VSCodium with the extension loaded.
+3. In the new instance of VSCodium that opens, you can open or create a Codex project and use the extension for debugging purposes.
 
 ### Side Loading the .vsix File
 
-1. After creating the `.vsix` file (as described above), open Visual Studio Code.
+1. After creating the `.vsix` file (as described above), open VSCodium.
 2. Go to the Extensions view by clicking the Extensions icon in the Activity Bar on the side of the window or by pressing `Ctrl+Shift+X`.
 3. Click the three horizontal dots in the top right corner of the Extensions view.
 4. Select "Install from VSIX..." from the dropdown menu.
@@ -82,7 +82,7 @@ This will also compile the sub-repository.
 ## Importing and Exporting USFM Files
 
 ### Importing a USFM File
-1. With a Codex project opened in Visual Studio Code, press `Ctrl+Shift+P` and type "Import USFM".
+1. With a Codex project opened in VSCodium, press `Ctrl+Shift+P` and type "Import USFM".
 2. **Note:** The USFM files must be in the ORG versification format. If they are not, the AI tools will not be coherent as verse references will be mismatched.
 3. Select the USFM file to import.
 4. The related Codex file will appear under `files/target` in the current Codex project.
@@ -118,14 +118,14 @@ GALATIANS
 ### Activating User Settings
 To modify the alignment training settings for _codex-wordmap_:
 
-1. Open Visual Studio Code and press `Ctrl+Shift+P` to open the Command Palette.
+1. Open VSCodium and press `Ctrl+Shift+P` to open the Command Palette.
 2. Type "Preferences: Open Settings (UI)" to access the settings editor with a user-friendly interface.
 3. In the settings, search for `codex-wordmap` to find and modify the relevant settings like `alignmentTraining.enabled` and `alignmentTraining.bookGroups`.
 4. Adjust the settings as needed, and ensure your configuration reflects the desired setup for alignment training.
 
 ## Usage
 
-To familiarize yourself with the project, please refer to the following [YouTube video](https://youtu.be/a50lTK3R8po) tutorial. Additionally, you may find the following [video](https://youtu.be/Pr1H999OXNw) demonstrating the effective utilization of our AI-powered alignment suggestion feature helpful.
+To familiarize yourself with the project, please refer to the following [YouTube video](https://youtu.be/Z64khgwMiQk) tutorial.
 
 ## License
 
