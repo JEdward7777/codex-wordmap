@@ -183,18 +183,16 @@ export async function doCodexWordMapping( context: vscode.ExtensionContext, note
 let alignmentTrainerWorker: Worker | null = null;
 
 export async function startAlignmentTrainer(){
-    console.log( "crashDebug: startAlignmentTrainer", alignmentTrainerWorker );
     //Check if alignment training is enabled in the config
     if( vscode.workspace.getConfiguration('codex-wordmap').get('alignmentTraining.enabled', true) ){
  
 
         //Test if it's already running.
         if( alignmentTrainerWorker === null ){
-            console.log( "crashDebug: starting alignment trainer worker" );
             alignmentTrainerWorker = new Worker(path.join(__dirname, "./alignmentTrainerWorker.js"));
 
             alignmentTrainerWorker.on('exit', (code) => {
-                console.log( "crashDebug: alignment trainer worker exited with code " + code );
+                console.log( "Alignment trainer worker exited with code " + code );
                 alignmentTrainerWorker = null;
             });
 
@@ -258,10 +256,10 @@ export async function startAlignmentTrainer(){
                 }
             });
         }else{
-            console.log( "crashDebug: alignment trainer worker already running" );
+            console.log( "Alignment trainer worker already running" );
         }
 
     }else{
-        console.log( "crashDebug: alignment training not enabled" );
+        console.log( "Alignment training not enabled" );
     }
 }

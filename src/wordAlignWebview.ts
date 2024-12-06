@@ -34,7 +34,7 @@ class WordAlignWebview{
                 localResourceRoots: [vscode.Uri.joinPath(this._context.extensionUri, 'webview-ui','wordmap_wrapper','build')]
             }
         );
-        console.log( "crashDebug: showWordAlignWebview" );
+        console.log( "ShowWordAlignWebview" );
         this._panel.webview.html = this.getHtmlForWebview(this._panel.webview);
 
 
@@ -45,21 +45,16 @@ class WordAlignWebview{
         //Handle messages from the webview
         this._panel.webview.onDidReceiveMessage(
             (message : CodexWordmapMessage) => {
-                console.log( "crashDebug: onDidReceiveMessage start ", message.command );
                 switch (message.command) {
                     case 'return':
-                        console.log( "crashDebug: return (handleAccept) vscodeside start" );
                         if( !this.returnCalled ) {
                             this.returnCalled = true;
                             this.returnResolver?.(message.content);
                         }
-                        console.log( "crashDebug: return (handleAccept) vscodeside end" );
                         this.dispose();
                         break;
                     case 'close': 
-                        console.log( "crashDebug: close (handleCancel) vscodeside start" );
                         this.dispose();
-                        console.log( "crashDebug: close (handleCancel) vscodeside end" );
                         break;
                     case 'ready':
                         //The react component is ready, give it the reference.
@@ -79,7 +74,6 @@ class WordAlignWebview{
                         break;
 
                     case 'makeAlignmentSuggestions':
-                        console.log( "crashDebug: makeAlignmentSuggestions vscodeside start" );
                         this.makeAlignmentSuggestions( { documentUri: this.document_uri, ...message.content! }  ).then( result => {
                             const response : CodexWordmapMessage = {
                                 command: "response",
@@ -87,7 +81,6 @@ class WordAlignWebview{
                                 content: result,
                             };
                             this._panel?.webview.postMessage(response);
-                            console.log( "crashDebug: makeAlignmentSuggestions vscodeside end" );
                         }).catch( error => {
                             const response : CodexWordmapMessage = {
                                 command: "response",
@@ -96,23 +89,8 @@ class WordAlignWebview{
                             };
                             this._panel?.webview.postMessage(response);
                         });
-                        //for debugging just add a timeout that returns an empty array
-                        //after 10 seconds.
-
-                        // setTimeout( () => {
-                        //     const response : CodexWordmapMessage = {
-                        //         command: "response",
-                        //         requestId: message.requestId,
-                        //         content: [],
-                        //     };
-                        //     this._panel?.webview.postMessage(response);
-                        //     console.log( "crashDebug: makeAlignmentSuggestions vscodeside " );
-                        // }, 10000);
-
-                        console.log( "crashDebug: makeAlignmentSuggestions vscodeside end" );
                         break;
                 }
-                console.log( "crashDebug: onDidReceiveMessage end", message.command );
             },
             undefined,
 			this._disposables
@@ -125,7 +103,6 @@ class WordAlignWebview{
 
     public dispose() {
         if( !this.returnCalled ){
-            console.log( "crashDebug: webview closed" );
             this.returnCalled = true;
             this.returnResolver?.(undefined);
         }
@@ -174,8 +151,6 @@ class WordAlignWebview{
     private static loaded_alignment_model_unload_timers: { [model_name: string]: NodeJS.Timeout } = {};
 
     async loadAlignmentModelForDocument(documentUri: vscode.Uri) : Promise<AbstractWordMapWrapper | undefined>{
-        console.log( "crashDebug: loadAlignmentModelForDocument" );
-
         const getConfigurationFunction = async ( section: string ) : Promise<string> => {
             return vscode.workspace?.getConfiguration("codex-wordmap").get( section ) ?? "";
         };
@@ -197,12 +172,11 @@ class WordAlignWebview{
         //see if model_name is loaded in load_alignment_models.
 
         if( !(modelPath in WordAlignWebview.loaded_alignment_models)){
-            console.log( "crashDebug: Doing model load because it wasn't in the loaded models" );
+            console.log( "Doing model load because it wasn't in the loaded models" );
             const result = await loadAlignmentModel( modelPath );
             if ( result === undefined ) return undefined;
             if ( result.model === undefined ) return undefined;
             WordAlignWebview.loaded_alignment_models[modelPath] = result;
-            console.log( "crashDebug: model loaded" );
         }
 
         const {model, file_modification_time} : {model: AbstractWordMapWrapper, file_modification_time: number} = WordAlignWebview.loaded_alignment_models[modelPath];
@@ -230,9 +204,8 @@ class WordAlignWebview{
             const stat = await fs.promises.stat( modelPath );
             const current_modification_time = stat.mtimeMs;
             if( current_modification_time > file_modification_time ){
-                console.log( "crashDebug: Doing after the fact model loading..." );
+                console.log( "Doing after the fact model loading..." );
                 WordAlignWebview.loaded_alignment_models[modelPath] = await loadAlignmentModel( modelPath );
-                console.log( "crashDebug: After after the fact model loading." );   
             }         
         } );
     }
@@ -241,8 +214,6 @@ class WordAlignWebview{
         {documentUri,             sourceSentence,          targetSentence,          maxSuggestions,         manuallyAligned} : 
         {documentUri: vscode.Uri, sourceSentence: TWord[], targetSentence: TWord[], maxSuggestions: number, manuallyAligned: TSourceTargetAlignment[]}) : Promise<TAlignmentSuggestion[]>{
         
-        console.log( "crashDebug: Running makeAlignmentSuggestions" );
-
         const model = await this.loadAlignmentModelForDocument( documentUri );
         if( model === undefined ) return [];
         
@@ -253,16 +224,11 @@ class WordAlignWebview{
         updateTokenLocations( targetSentenceWordMap );
         const manuallyAlignedWordMap = manuallyAligned.map( tSourceTargetAlignmentToWordmapAlignment );
 
-        console.log( "crashDebug: making alignment suggestions" );
-        
         const suggestions = model.predict( sourceSentenceWordMap, targetSentenceWordMap, maxSuggestions, manuallyAlignedWordMap );
-        console.log( "crashDebug: made alignment suggestions" );
         console.log( suggestions );
 
         const convertedSuggestions = suggestions.map( wordmapSuggestionToTAlignmentSuggestion );
 
-
-        console.log( "crashDebug: returning convertedSuggestions" );
         return convertedSuggestions;
     }
 };

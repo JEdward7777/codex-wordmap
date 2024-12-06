@@ -108,9 +108,6 @@ async function getNeedsTraining( bookGroup: string[] ){
 }
 
 async function trainModelForBookGroup( data: TTrainingAndTestingData ){
-    console.log( "crashDebug: trainModelForBookGroup .1 ..." );
-
-
     //Convert the data into the structure which the training model expects.
     let sourceVersesTokenized : {[reference: string]: Token[] } = {};
     let targetVersesTokenized : {[reference: string]: Token[] } = {};
@@ -158,7 +155,6 @@ async function trainModelForBookGroup( data: TTrainingAndTestingData ){
     //400 worked.  Ok, now going to increase the .01 back up to .1.
     //That worked.
     const maxAlignmentSets = 400;
-    console.log( "crashDebug: maxAlignmentSets ", maxAlignmentSets );
     if (Object.keys(alignments).length > maxAlignmentSets) {
         //shuffle the alignments and then take the first target_max_alignments
         var alignmentsAsArray = Object.entries(alignments);
@@ -228,9 +224,6 @@ async function trainModelForBookGroup( data: TTrainingAndTestingData ){
     wordAlignerModel.appendKeyedCorpusTokens(sourceVersesTokenized,targetVersesTokenized);
     
     await wordAlignerModel.add_alignments_2(sourceVersesTokenized,targetVersesTokenized,alignments);
-
-
-    console.log( "crashDebug: trainModelForBookGroup complete" );
 
     return wordAlignerModel;
 
@@ -320,17 +313,16 @@ async function trainBookGroup( bookGroup: string[] ){
     }
 
     //Do the actual training.
-    console.log( "crashDebug: worker: Training...");
+    console.log( "worker: Training...");
 
     const model = await trainModelForBookGroup( bookAlignments );
-    console.log( "crashDebug: worker: Training complete." );
+    console.log( "worker: Training complete." );
 
     //Await a 5 second sleep so that gc can possibly free up some memory.
-    console.log( "crashDebug: worker: Sleeping for 5 seconds..." );
     await new Promise(resolve => setTimeout(resolve, 5000));
 
     //save the model
-    console.log( "crashDebug: worker: Saving model..." );
+    console.log( "worker: Saving model..." );
     if( modelPath ){
         const replaceModel = async () : Promise<void> =>   {
             const tempPath = modelPath + ".tmp";
@@ -365,9 +357,9 @@ async function trainBookGroup( bookGroup: string[] ){
             });
         };
     
-        console.log( "crashDebug: worker: saving model..." );
+        console.log( "worker: saving model..." );
         await replaceModel();
-        console.log( "crashDebug: worker: saved model." );
+        console.log( "worker: saved model." );
     }
 }
 
