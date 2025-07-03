@@ -344,6 +344,94 @@ export function pullVerseFromPerf( reference: string, perf: Perf, index: TBlockC
     return collectedContent;
 }
 
+export function replaceVerseInPerf( reference: string, perf: Perf, newVerse: PerfVerse,index: TBlockContentIndex | undefined = undefined ): void {
+    if( !reference ) return;
+    
+    const referenceParts = reference.split(":");
+
+    if( referenceParts.length !== 2 ) return;
+
+    const chapter : string = referenceParts[0];
+    const verse : string = referenceParts[1];
+
+
+    let currentChapter : string = "-1";
+    let currentVerse : string = "-1";
+
+    let firstIteration = true;
+    let foundContent = false;
+
+    let blockIndex = -1;
+    let contentIndex = -1;
+
+    //first iterate the chapters.
+    //perf.sequences[perf.main_sequence_id].blocks is an array.
+    blockLoop: for( blockIndex = 0; blockIndex < (perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks?.length ?? 0); blockIndex++ ){
+        let block = perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks?.[blockIndex];    
+    
+        if( block !== undefined && block.type === 'paragraph' ){
+            for( contentIndex = 0; contentIndex < (block?.content?.length ?? 0); contentIndex++ ){
+                let content = block?.content?.[contentIndex];
+
+                //see if we were passed in a cheater starter index.
+                if( firstIteration && index !== undefined ){
+                    firstIteration = false;
+                    blockIndex = index.b;
+                    contentIndex = index.c;
+                    currentChapter = chapter;
+                    currentVerse = verse;
+                    block = perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks?.[blockIndex];
+                    content = block?.content?.[contentIndex];
+                }
+            
+                if( typeof(content) === 'object' && content.type === 'mark' ){
+                    if( content.subtype === 'chapter' ){
+                        currentChapter = content?.atts?.number ?? "-1";
+                    }else if( content.subtype === 'verses' ){
+                        currentVerse = content?.atts?.number ?? "-1";
+                    }
+                    if( currentChapter === chapter && currentVerse === verse ){
+                        foundContent = true;
+                    }else if( foundContent && (currentChapter !== chapter || currentVerse !== verse) ){
+
+                        //If we are at the start of a new verse we can escape.
+                        break blockLoop;
+                    }
+                }else{
+                    //if we are in the correct reference then collect the content.
+                    if( currentChapter === chapter && currentVerse === verse ){
+                        //drop all content which is in this verse with splice
+                        block?.content?.splice( contentIndex, 1 );
+                        //now back the index up so it is ready for the next iteration.
+                        contentIndex--;
+                    }
+                }
+            }
+        }
+    }
+
+    //and now splice in the new content where it was.
+    if( foundContent ){
+        perf?.sequences?.[perf?.main_sequence_id ?? ""]?.blocks?.[blockIndex]?.content?.splice( contentIndex, 0, ...newVerse );
+    }
+}
+
+
+export function makeSureVerseWordsAreWrapped( reference: string, perf: Perf ){
+    const [book, chapterVerseRef] = reference.split(" ");
+    if( !chapterVerseRef.includes(":") ) return;
+
+    let perfVerse = pullVerseFromPerf( chapterVerseRef, perf );
+    if ( !perfVerse ) return;
+    //See if the perf verse has only one item and it is a string.
+    if( perfVerse.length === 1 && typeof(perfVerse[0]) === 'string' ){
+        perfVerse = stringToPerfVerse( perfVerse[0] );
+
+        //now do a replacement
+        replaceVerseInPerf( chapterVerseRef, perf, perfVerse );
+    }
+}
+
 
 export function pullVersesFromPerf( perf: Perf ): { [key: string]: PerfVerse } {
     let currentChapter : string = "-1";
@@ -614,6 +702,10 @@ function computeOccurrenceInformation( words: TWord[] ){
 }
 
 export function extractWrappedWordsFromPerfVerse( perfVerse: PerfVerse, type: string, reindexOccurrences: boolean = false ): TWord[] {
+    if( perfVerse.length === 1 && typeof perfVerse[0] === 'string' ){
+        perfVerse = stringToPerfVerse( perfVerse[0] );
+    }
+
     let wrappedWords : TWord[] = [];
     let inMapping = false;
     let index = 0;
@@ -911,11 +1003,12 @@ export function replaceAlignmentsInPerfInPlace( perf: Perf, chapter: number, ver
                     let content = block?.content?.[contentIndex];
                     if (content !== undefined) {
                         if (typeof (content) === "object" && ("type" in content) && content.type === "mark") {
-                            if ("subtype" in content) { }
-                            if (content.subtype === "chapter") {
-                                currentChapter = parseInt(content.atts?.number ?? "-1");
-                            } else if (content.subtype === "verses") {
-                                currentVerse = parseInt(content.atts?.number ?? "-1");
+                            if ("subtype" in content) {
+                                if (content.subtype === "chapter") {
+                                    currentChapter = parseInt(content.atts?.number ?? "-1");
+                                } else if (content.subtype === "verses") {
+                                    currentVerse = parseInt(content.atts?.number ?? "-1");
+                                }
                             }
                         }
                     }

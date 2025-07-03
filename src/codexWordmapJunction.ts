@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { getPerfFromActiveNotebook, getPerfFromNotebookSingleVerseOptimized, readUsfmData, updatePerfOnNotebook } from "./usfmStuff/importUsfm";
-import { PRIMARY_WORD, Perf, SECONDARY_WORD, TAlignmentPackage, TSourceTargetAlignment, TWord, extractAlignmentsFromPerfVerse, extractWrappedWordsFromPerfVerse, pullVerseFromPerf, reindexPerfVerse, replaceAlignmentsInPerfInPlace, sortAndSupplementFromSourceWords } from "./usfmStuff/utils";
+import { PRIMARY_WORD, Perf, SECONDARY_WORD, TAlignmentPackage, TSourceTargetAlignment, TWord, extractAlignmentsFromPerfVerse, extractWrappedWordsFromPerfVerse, makeSureVerseWordsAreWrapped, pullVerseFromPerf, reindexPerfVerse, replaceAlignmentsInPerfInPlace, sortAndSupplementFromSourceWords } from "./usfmStuff/utils";
 import { showWordAlignWebview } from "./wordAlignWebview";
 import { Worker } from 'node:worker_threads';
 import { WorkerMessage } from './workers/alignmentTrainerTypes';
@@ -170,6 +170,8 @@ export async function doCodexWordMapping( context: vscode.ExtensionContext, note
     if( !chapterStr || !verseStr ) return;
     const chapter = parseInt( chapterStr );
     const verse = parseInt( verseStr );
+
+    makeSureVerseWordsAreWrapped( verseRef, targetPerf );
 
     //take the alignments returned by the webview and update the perf.
     replaceAlignmentsInPerfInPlace( targetPerf, chapter, verse, modifiedAlignments );
